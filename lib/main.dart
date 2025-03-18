@@ -73,6 +73,8 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+
+              // Logo
               Container(
                 width: 240,
                 height: 240,

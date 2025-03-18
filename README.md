@@ -1,4 +1,4 @@
-# app
+# RoomFinder
 
 A new Flutter project.
 
