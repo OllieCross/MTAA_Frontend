@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'search.dart';
+import 'register.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _passwordError = false;
   bool _obscurePassword = true;
   String? _emailErrorMessage;
+  String? _loginErrorMessage;
 
   bool _isValidEmail(String email) {
     final RegExp regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
@@ -54,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
           : (!_isValidEmail(_emailController.text) ? "Invalid email format" : null);
     });
 
-    if (!_emailError && !_passwordError) {
+    if (!_emailError && !_passwordError && _loginErrorMessage == null) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => SearchScreen()),
@@ -194,7 +198,31 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _validateAndLogin,
+                    onPressed: () async {
+                      _validateAndLogin();
+                      if (!_emailError && !_passwordError) {
+                        final email = _emailController.text;
+                        final password = _passwordController.text;
+                        try {
+                          final response = await http.post(
+                            Uri.parse('http://127.0.0.1:5000/login'),
+                            headers: {'Content-Type': 'application/json'},
+                            body: jsonEncode({'email': email, 'password': password}),
+                          );
+                          if (response.statusCode == 200) {
+                            setState(() => _loginErrorMessage = null);
+                          } else {
+                            setState(() {
+                              _loginErrorMessage = "invalid email or password";
+                            });
+                          }
+                        } catch (e) {
+                          setState(() {
+                            _loginErrorMessage = "connection error";
+                          });
+                        }
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red[400],
                       shape: RoundedRectangleBorder(
@@ -208,19 +236,33 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 10), // Some spacing before error text
+
+              // 3. Show the error message under the button if there is one:
+              if (_loginErrorMessage != null) ...[
+                Text(
+                  _loginErrorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ],
               
               // Register text button
               TextButton(
-                onPressed: () {},
-                child: Text(
-                  "Register",
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                    decoration: TextDecoration.underline, fontFamily: 'Helvetica',
-                  ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RegisterScreen()),
+                );
+              },
+              child: Text(
+                "Register",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white70 : Colors.black54,
+                  decoration: TextDecoration.underline,
+                  fontFamily: 'Helvetica',
                 ),
               ),
+            ),
             ],
           ),
         ),
