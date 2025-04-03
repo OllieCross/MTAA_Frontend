@@ -19,7 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _emailErrorMessage;
   String? _passwordErrorMessage;
   String? _repeatPasswordErrorMessage;
-
+  
   void _onRegisterPressed() {
     // Reset errors first
     setState(() {
@@ -64,9 +64,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
       appBar: AppBar(
-        title: const Text('Register'),
+        backgroundColor: isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
       ),
       body: Center(
         // Center the content both vertically and horizontally
@@ -78,6 +80,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start, // left-align text
               children: [
+                
+                // TITLE
+                Center(
+                  child: Text(
+                    'Registration',
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Helvetica',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+
                 // EMAIL
                 _buildFieldContainer(
                   child: TextField(
@@ -189,7 +205,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Helper: Build the container for each field with lighter drop shadow
   Widget _buildFieldContainer({required Widget child}) {
     return Stack(
       children: [

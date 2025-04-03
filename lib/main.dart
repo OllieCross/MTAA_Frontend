@@ -4,6 +4,8 @@ import 'search.dart';
 import 'register.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+// 1) Import crypto for hashing:
+import 'package:crypto/crypto.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,12 +34,13 @@ class RoomFinderApp extends StatelessWidget {
 
 class LoginScreen extends StatefulWidget {
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  LoginScreenState createState() => LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
   bool _emailError = false;
   bool _passwordError = false;
   bool _obscurePassword = true;
@@ -45,53 +48,96 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _loginErrorMessage;
 
   bool _isValidEmail(String email) {
-    final RegExp regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final RegExp regex =
+        RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
     return regex.hasMatch(email);
   }
 
-  void _validateAndLogin() {
+  /// 1) Perform only local validation here
+  void _validateFields() {
     setState(() {
-      _emailError = _emailController.text.isEmpty || !_isValidEmail(_emailController.text);
+      _emailError = _emailController.text.isEmpty ||
+          !_isValidEmail(_emailController.text);
       _passwordError = _passwordController.text.isEmpty;
       _emailErrorMessage = _emailController.text.isEmpty
           ? "This text field cannot be empty"
-          : (!_isValidEmail(_emailController.text) ? "Invalid email format" : null);
+          : (!_isValidEmail(_emailController.text)
+              ? "Invalid email format"
+              : null);
     });
+  }
 
-    if (!_emailError && !_passwordError && _loginErrorMessage == null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SearchScreen()),
+  /// 2) After local validation, call the server if no local error
+  Future<void> _attemptLogin() async {
+    _validateFields(); // local validation
+    if (_emailError || _passwordError) {
+      return; // Stop if local checks fail
+    }
+
+    // Clear any previous API error
+    setState(() => _loginErrorMessage = null);
+
+    final email = _emailController.text;
+    final password = _passwordController.text;
+
+    // 3) Hash the password locally before sending:
+    //    Suppose your Flask code expects SHA256
+    final bytes = utf8.encode(password); 
+    final hashedPassword = sha256.convert(bytes).toString();
+
+    try {
+      // 4) Send the hashed password to match what Flask is expecting
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:5000/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': hashedPassword}),
       );
+
+      if (response.statusCode == 200) {
+        // Success: Move to next screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => SearchScreen()),
+        );
+      } else {
+        // Failure: Show error message, do not navigate
+        setState(() => _loginErrorMessage = "invalid email or password");
+      }
+    } catch (e) {
+      // Connection or server error
+      setState(() {
+        _loginErrorMessage = "connection error: $e";
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
+      backgroundColor:
+          isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 30.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
               // Logo
               Container(
                 width: 240,
                 height: 240,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.rectangle,
                   color: Colors.transparent,
                 ),
-                child: Image.asset( isDarkMode ? 'assets/logo_dark.png' :
-                  'assets/logo.png',
+                child: Image.asset(
+                  isDarkMode ? 'assets/logo_dark.png' : 'assets/logo.png',
                   fit: BoxFit.contain,
                 ),
               ),
-              
+
               // Email Input Field
               Stack(
                 children: [
@@ -100,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     margin: const EdgeInsets.only(bottom: 5),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.black26,
                           blurRadius: 4,
@@ -113,17 +159,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[300],
+                      fillColor:
+                          isDarkMode ? Colors.grey[800] : Colors.grey[300],
                       hintText: "Email",
-                      hintStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54, fontFamily: 'Helvetica'),
-                        border: OutlineInputBorder(
+                      hintStyle: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                        fontFamily: 'Helvetica',
+                      ),
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
                       ),
                       errorText: _emailError ? _emailErrorMessage : null,
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.red, width: 2),
+                        borderSide:
+                            const BorderSide(color: Colors.red, width: 2),
                       ),
                     ),
                   ),
@@ -139,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     margin: const EdgeInsets.only(bottom: 5),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.black26,
                           blurRadius: 4,
@@ -153,13 +204,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[300],
+                      fillColor:
+                          isDarkMode ? Colors.grey[800] : Colors.grey[300],
                       hintText: "Password",
-                      hintStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54, fontFamily: 'Helvetica'),
+                      hintStyle: TextStyle(
+                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                        fontFamily: 'Helvetica',
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                          color: isDarkMode ? Colors.white70 : Colors.black54,
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color:
+                              isDarkMode ? Colors.white70 : Colors.black54,
                         ),
                         onPressed: () {
                           setState(() {
@@ -171,10 +229,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
                       ),
-                      errorText: _passwordError ? "This text field cannot be empty" : null,
+                      errorText: _passwordError
+                          ? "This text field cannot be empty"
+                          : null,
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.red, width: 2),
+                        borderSide:
+                            const BorderSide(color: Colors.red, width: 2),
                       ),
                     ),
                   ),
@@ -186,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 4,
@@ -198,31 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      _validateAndLogin();
-                      if (!_emailError && !_passwordError) {
-                        final email = _emailController.text;
-                        final password = _passwordController.text;
-                        try {
-                          final response = await http.post(
-                            Uri.parse('http://127.0.0.1:5000/login'),
-                            headers: {'Content-Type': 'application/json'},
-                            body: jsonEncode({'email': email, 'password': password}),
-                          );
-                          if (response.statusCode == 200) {
-                            setState(() => _loginErrorMessage = null);
-                          } else {
-                            setState(() {
-                              _loginErrorMessage = "invalid email or password";
-                            });
-                          }
-                        } catch (e) {
-                          setState(() {
-                            _loginErrorMessage = "connection error";
-                          });
-                        }
-                      }
-                    },
+                    onPressed: _attemptLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red[400],
                       shape: RoundedRectangleBorder(
@@ -231,38 +268,42 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: const Text(
                       "Login",
-                      style: TextStyle(fontSize: 18, color: Colors.white, fontFamily: 'Helvetica'),
+                      style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                          fontFamily: 'Helvetica'),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 10), // Some spacing before error text
+              const SizedBox(height: 10),
 
-              // 3. Show the error message under the button if there is one:
+              // Show login error (API error) if any
               if (_loginErrorMessage != null) ...[
                 Text(
                   _loginErrorMessage!,
                   style: const TextStyle(color: Colors.red),
                 ),
               ],
-              
+
               // Register text button
               TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RegisterScreen()),
-                );
-              },
-              child: Text(
-                "Register",
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white70 : Colors.black54,
-                  decoration: TextDecoration.underline,
-                  fontFamily: 'Helvetica',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const RegisterScreen()),
+                  );
+                },
+                child: Text(
+                  "Register",
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                    decoration: TextDecoration.underline,
+                    fontFamily: 'Helvetica',
+                  ),
                 ),
               ),
-            ),
             ],
           ),
         ),
