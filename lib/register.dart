@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,7 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _passwordErrorMessage;
   String? _repeatPasswordErrorMessage;
   
-  void _onRegisterPressed() {
+  Future<void> _onRegisterPressed() async {
     // Reset errors first
     setState(() {
       _emailErrorMessage = null;
@@ -59,7 +61,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     // If no error, register
     if (!hasError) {
+      try {
+        final response = await http.post(
+          Uri.parse('http://localhost:5000/register'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': email,
+            'password': password,
+            'role': 'guest', // voliteľne, backend má predvolené
+          }),
+        );
+
+        if (response.statusCode == 201) {
+          if (!mounted) return;
+          Navigator.pop(context);
+        } else {
+          final body = jsonDecode(response.body);
+          setState(() {
+            _emailErrorMessage = body['message'] ?? 'Registration failed';
+          });
+        }
+      } catch (e) {
+        setState(() {
+          _emailErrorMessage = "Connection error: $e";
+        });
+      }
     }
+
   }
 
   @override

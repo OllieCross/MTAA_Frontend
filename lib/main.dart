@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'search.dart';
+import 'main_screen_accommodations.dart';
 import 'register.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-// 1) Import crypto for hashing:
-import 'package:crypto/crypto.dart';
+
+String? globalToken;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +33,7 @@ class RoomFinderApp extends StatelessWidget {
 }
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
   @override
   LoginScreenState createState() => LoginScreenState();
 }
@@ -80,24 +81,20 @@ class LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text;
     final password = _passwordController.text;
 
-    // 3) Hash the password locally before sending:
-    //    Suppose your Flask code expects SHA256
-    final bytes = utf8.encode(password); 
-    final hashedPassword = sha256.convert(bytes).toString();
 
     try {
       // 4) Send the hashed password to match what Flask is expecting
       final response = await http.post(
         Uri.parse('http://127.0.0.1:5000/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': hashedPassword}),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       if (response.statusCode == 200) {
         // Success: Move to next screen
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => SearchScreen()),
+          MaterialPageRoute(builder: (context) => MainScreenAccommodations()),
         );
       } else {
         // Failure: Show error message, do not navigate
