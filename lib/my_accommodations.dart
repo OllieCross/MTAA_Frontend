@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'add_accommondation.dart';
+import 'server_config.dart';
 
 class MyAccommodationsScreen extends StatefulWidget {
   const MyAccommodationsScreen({super.key});
@@ -22,7 +23,7 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
 
   Future<void> _loadMyAccommodations() async {
     final token = globalToken;
-    final url = Uri.parse('http://localhost:5000/my-accommodations');
+    final url = Uri.parse('http://$serverIp:$serverPort/my-accommodations');
 
     final response = await http.get(
       url,
@@ -46,7 +47,7 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
     final token = globalToken;
 
     final response = await http.delete(
-      Uri.parse('http://localhost:5000/delete-accommodation/$aid'),
+      Uri.parse('http://$serverIp:$serverPort/delete-accommodation/$aid'),
       headers: {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',

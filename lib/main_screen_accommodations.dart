@@ -5,6 +5,7 @@ import 'search_results_screen.dart';
 import 'main.dart';
 import 'bottom_navbar.dart';
 import 'accommondation_detail.dart';
+import 'server_config.dart';
 
 
 class MainScreenAccommodations extends StatefulWidget {
@@ -34,7 +35,7 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
       jwtToken = globalToken;
 
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:5000/main-screen-accommodations'),
+        Uri.parse('http://$serverIp:$serverPort/main-screen-accommodations'),
         headers: {
           'Content-Type': 'application/json',
           if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',

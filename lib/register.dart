@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'server_config.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -63,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!hasError) {
       try {
         final response = await http.post(
-          Uri.parse('http://localhost:5000/register'),
+          Uri.parse('http://$serverIp:$serverPort/register'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'email': email,

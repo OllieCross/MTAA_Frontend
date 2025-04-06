@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'accommondation_detail.dart';
+import 'server_config.dart';
 
 class SearchResultsScreen extends StatefulWidget {
   final String location;
@@ -32,7 +33,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   }
 
   Future<void> _fetchSearchResults() async {
-    final url = Uri.parse('http://127.0.0.1:5000/search-accommodations');
+    final url = Uri.parse('http://$serverIp:$serverPort/search-accommodations');
     final token = globalToken;
 
     final response = await http.post(

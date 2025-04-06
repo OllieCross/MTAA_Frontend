@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'bottom_navbar.dart';
 import 'main.dart';
 import 'accommondation_detail.dart';
+import 'server_config.dart';
 
 class LikedScreen extends StatefulWidget {
   const LikedScreen({super.key});
@@ -23,7 +24,7 @@ class _LikedScreenState extends State<LikedScreen> {
 
   Future<void> _loadLiked() async {
     final token = globalToken;
-    final url = Uri.parse('http://127.0.0.1:5000/liked-accommodations');
+    final url = Uri.parse('http://$serverIp:$serverPort/liked-accommodations');
 
     try {
       final response = await http.get(

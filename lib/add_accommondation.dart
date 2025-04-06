@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'main.dart';
+import 'server_config.dart';
 
 class AddAccommodationScreen extends StatefulWidget {
   final Map<String, dynamic>? accommodation;
@@ -78,7 +79,7 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
 
     setState(() => isUploading = true);
 
-    final uri = Uri.parse('http://localhost:5000/add-accommodation');
+    final uri = Uri.parse('http://$serverIp:$serverPort/add-accommodation');
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
       ..fields['name'] = nameController.text

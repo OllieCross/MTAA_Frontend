@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'confirmation.dart';
+import 'server_config.dart';
 
 class ReserveFormularScreen extends StatefulWidget {
   final Map<String, dynamic> accommodation;
@@ -176,7 +177,7 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
     }
 
     final token = globalToken;
-    final url = Uri.parse('http://localhost:5000/make-reservation');
+    final url = Uri.parse('http://$serverIp:$serverPort/make-reservation');
     final aid = widget.accommodation['aid'];
 
     try {

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'main.dart'; // kvôli globalToken
 import 'my_accommodations.dart'; // ak máš túto obrazovku
 import 'bottom_navbar.dart';
+import 'server_config.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -22,7 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadReservations() async {
-    final url = Uri.parse('http://127.0.0.1:5000/my-reservations');
+    final url = Uri.parse('http://$serverIp:$serverPort/my-reservations');
     final token = globalToken;
 
     try {

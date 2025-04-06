@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'gallery.dart';
 import 'reserve_formular.dart';
+import 'server_config.dart';
 
 class AccommodationDetailScreen extends StatefulWidget {
   final int aid;
@@ -26,7 +27,7 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
 
   Future<void> fetchAccommodationDetail() async {
     final response = await http.get(
-      Uri.parse('http://localhost:5000/accommodation/${widget.aid}'),
+      Uri.parse('http://$serverIp:$serverPort/accommodation/${widget.aid}'),
       headers: {
         'Content-Type': 'application/json',
         if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',

@@ -4,6 +4,7 @@ import 'main_screen_accommodations.dart';
 import 'register.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'server_config.dart';
 
 String? globalToken;
 
@@ -85,7 +86,7 @@ class LoginScreenState extends State<LoginScreen> {
     try {
       // 4) Send the hashed password to match what Flask is expecting
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:5000/login'),
+        Uri.parse('http://$serverIp:$serverPort/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
