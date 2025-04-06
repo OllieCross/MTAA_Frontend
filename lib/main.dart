@@ -93,6 +93,7 @@ class LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         // Success: Move to next screen
+        globalToken = jsonDecode(response.body)['token'];
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => MainScreenAccommodations()),

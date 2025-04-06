@@ -7,7 +7,6 @@ import 'bottom_navbar.dart';
 import 'accommondation_detail.dart';
 import 'server_config.dart';
 
-
 class MainScreenAccommodations extends StatefulWidget {
   const MainScreenAccommodations({super.key});
 
