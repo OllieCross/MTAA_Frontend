@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'main.dart'; // kvôli globalToken
-import 'my_accommodations.dart'; // ak máš túto obrazovku
+import 'main.dart';
+import 'my_accommodations.dart';
 import 'bottom_navbar.dart';
 import 'server_config.dart';
 
@@ -77,21 +77,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final boxColor = isDark ? Colors.grey[900] : Colors.white;
+    final iconColor = isDark ? Colors.white : Colors.black;
+
     return Scaffold(
+      backgroundColor: isDark ? Colors.black : Colors.white,
       bottomNavigationBar: const BottomNavBar(currentIndex: 2),
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
             const SizedBox(height: 24),
-            const Text(
+            Text(
               "Your Reservations",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
             ),
             const SizedBox(height: 16),
             Expanded(
               child: reservations.isEmpty
-                  ? const Center(child: Text("No reservations yet."))
+                  ? Center(child: Text("No reservations yet.", style: TextStyle(color: textColor)))
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: reservations.length,
@@ -103,11 +108,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: boxColor,
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black12,
+                                color: isDark ? Colors.black26 : Colors.black12,
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               )
@@ -119,10 +124,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Text(
                                 location,
-                                style: const TextStyle(fontSize: 16),
+                                style: TextStyle(fontSize: 16, color: textColor),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline),
+                                icon: Icon(Icons.delete_outline, color: iconColor),
                                 onPressed: () => _deleteReservation(res['rid']),
                               ),
                             ],

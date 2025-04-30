@@ -83,7 +83,9 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(title: const Text("My Accommodations")),
       body: Column(
         children: [

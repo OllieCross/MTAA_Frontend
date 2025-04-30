@@ -14,13 +14,13 @@ class BottomNavBar extends StatelessWidget {
     Widget nextScreen;
     switch (index) {
       case 0:
-        nextScreen = MainScreenAccommodations();
+        nextScreen = const MainScreenAccommodations();
         break;
       case 1:
-        nextScreen = LikedScreen();
+        nextScreen = const LikedScreen();
         break;
       case 2:
-        nextScreen = ProfileScreen();
+        nextScreen = const ProfileScreen();
         break;
       default:
         return;
@@ -38,25 +38,40 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color selectedColor = isDark ? Colors.white : Colors.black;
+    final Color unselectedColor = isDark ? Colors.white70 : Colors.grey;
+    final Color bgColor = isDark ? Colors.black : Colors.white;
+
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: (index) => _onTap(context, index),
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.grey,
-      backgroundColor: Colors.white,
+      selectedItemColor: selectedColor,
+      unselectedItemColor: unselectedColor,
+      backgroundColor: bgColor,
       showSelectedLabels: true,
       showUnselectedLabels: true,
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: ImageIcon(AssetImage('assets/lupa.png')), // lupa.png
+          icon: ImageIcon(
+            const AssetImage('assets/lupa.png'),
+            color: currentIndex == 0 ? selectedColor : unselectedColor,
+          ),
           label: 'search',
         ),
         BottomNavigationBarItem(
-          icon: ImageIcon(AssetImage('assets/heart.png')), // srdce
+          icon: ImageIcon(
+            const AssetImage('assets/heart.png'),
+            color: currentIndex == 1 ? selectedColor : unselectedColor,
+          ),
           label: 'liked',
         ),
         BottomNavigationBarItem(
-          icon: ImageIcon(AssetImage('assets/user.png')), // profil
+          icon: ImageIcon(
+            const AssetImage('assets/user.png'),
+            color: currentIndex == 2 ? selectedColor : unselectedColor,
+          ),
           label: 'profile',
         ),
       ],

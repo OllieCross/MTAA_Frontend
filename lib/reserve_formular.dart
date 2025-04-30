@@ -5,7 +5,6 @@ import 'confirmation.dart';
 import 'server_config.dart';
 import 'dart:convert';
 
-
 class ReserveFormularScreen extends StatefulWidget {
   final Map<String, dynamic> accommodation;
 
@@ -21,6 +20,7 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final aid = widget.accommodation['aid'];
     final token = globalToken;
 
@@ -36,7 +36,12 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Your Reservation")),
+      backgroundColor: isDark ? Colors.black : Colors.white,
+      appBar: AppBar(
+        title: const Text("Your Reservation"),
+        backgroundColor: isDark ? Colors.grey[900] : null,
+        foregroundColor: isDark ? Colors.white : null,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -54,11 +59,16 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.accommodation['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(widget.accommodation['name'],
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black)),
                       const SizedBox(height: 4),
-                      Text(widget.accommodation['location'] ?? ''),
+                      Text(widget.accommodation['location'] ?? '',
+                          style: TextStyle(color: isDark ? Colors.white70 : Colors.black87)),
                       const SizedBox(height: 4),
-                      Text("${widget.accommodation['max_guests']} Guests"),
+                      Text("${widget.accommodation['max_guests']} Guests",
+                          style: TextStyle(color: isDark ? Colors.white70 : Colors.black87)),
                     ],
                   ),
                 )
@@ -67,30 +77,30 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
             const SizedBox(height: 24),
             Row(
               children: [
-                Expanded(child: _buildDatePicker("From", fromDate, (picked) => setState(() => fromDate = picked))),
+                Expanded(child: _buildDatePicker("From", fromDate, (picked) => setState(() => fromDate = picked), isDark)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildDatePicker("To", toDate, (picked) => setState(() => toDate = picked))),
+                Expanded(child: _buildDatePicker("To", toDate, (picked) => setState(() => toDate = picked), isDark)),
               ],
             ),
             const SizedBox(height: 24),
-            _buildTextField(label: 'Name'),
-            _buildTextField(label: 'Surname'),
+            _buildTextField(label: 'Name', isDark: isDark),
+            _buildTextField(label: 'Surname', isDark: isDark),
             Row(
               children: [
-                Expanded(child: _buildTextField(label: 'Street')),
+                Expanded(child: _buildTextField(label: 'Street', isDark: isDark)),
                 const SizedBox(width: 10),
-                SizedBox(width: 80, child: _buildTextField(label: 'Nr.')),
+                SizedBox(width: 80, child: _buildTextField(label: 'Nr.', isDark: isDark)),
               ],
             ),
             Row(
               children: [
-                Expanded(child: _buildTextField(label: 'City')),
+                Expanded(child: _buildTextField(label: 'City', isDark: isDark)),
                 const SizedBox(width: 10),
-                SizedBox(width: 100, child: _buildTextField(label: 'Zip Code')),
+                SizedBox(width: 100, child: _buildTextField(label: 'Zip Code', isDark: isDark)),
               ],
             ),
-            _buildTextField(label: 'Phone number', keyboardType: TextInputType.phone),
-            _buildTextField(label: 'Email address', keyboardType: TextInputType.emailAddress),
+            _buildTextField(label: 'Phone number', keyboardType: TextInputType.phone, isDark: isDark),
+            _buildTextField(label: 'Email address', keyboardType: TextInputType.emailAddress, isDark: isDark),
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
@@ -110,15 +120,21 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
     );
   }
 
-  Widget _buildTextField({required String label, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField({
+    required String label,
+    TextInputType keyboardType = TextInputType.text,
+    required bool isDark,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         keyboardType: keyboardType,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
           filled: true,
-          fillColor: Colors.grey[200],
+          fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -128,7 +144,7 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
     );
   }
 
-  Widget _buildDatePicker(String label, DateTime? selectedDate, Function(DateTime) onPicked) {
+  Widget _buildDatePicker(String label, DateTime? selectedDate, Function(DateTime) onPicked, bool isDark) {
     return GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(
@@ -142,7 +158,7 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: isDark ? Colors.grey[800] : Colors.grey[200],
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
@@ -150,7 +166,7 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
           selectedDate != null
               ? "${selectedDate.day}.${selectedDate.month}.${selectedDate.year}"
               : label,
-          style: const TextStyle(fontSize: 16),
+          style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black),
         ),
       ),
     );

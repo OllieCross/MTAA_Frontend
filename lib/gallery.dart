@@ -10,9 +10,11 @@ class GalleryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final String? jwtToken = globalToken;
 
     return Scaffold(
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(title: const Text('Gallery')),
       body: GridView.builder(
         padding: const EdgeInsets.all(8),

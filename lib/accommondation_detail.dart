@@ -65,9 +65,11 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     if (data == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+      backgroundColor: isDark ? Colors.black : Colors.white,
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 

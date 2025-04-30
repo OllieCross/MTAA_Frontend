@@ -89,8 +89,9 @@ class _LikedScreenState extends State<LikedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Colors.black : Colors.white,
       bottomNavigationBar: const BottomNavBar(currentIndex: 1),
       body: SafeArea(
         child: likedAccommodations.isEmpty

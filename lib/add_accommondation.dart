@@ -36,7 +36,6 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     final acc = widget.accommodation;
     if (acc != null) {
       nameController.text = acc['name'] ?? '';
-      // zatiaľ backend nevracia ďalšie údaje
     }
   }
 
@@ -56,9 +55,9 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
         final List<XFile> images = await picker.pickMultiImage();
         if (images.isNotEmpty) {
           if (!mounted) return;
-            setState(() {
-              selectedImages.addAll(images);
-            });
+          setState(() {
+            selectedImages.addAll(images);
+          });
         }
       } catch (e) {
         debugPrint("Image picker error: $e");
@@ -133,22 +132,28 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final isEdit = widget.accommodation != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? "Edit Accommodation" : "Add Accommodation")),
+      backgroundColor: isDark ? Colors.black : Colors.white,
+      appBar: AppBar(
+        backgroundColor: isDark ? Colors.grey[900] : null,
+        foregroundColor: isDark ? Colors.white : null,
+        title: Text(isEdit ? "Edit Accommodation" : "Add Accommodation"),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildField(label: "Name", controller: nameController),
-            _buildField(label: "Address", controller: addressController),
-            _buildField(label: "Nr. of Guests", controller: guestsController, keyboardType: TextInputType.number),
-            _buildField(label: "Price per Night", controller: priceController, keyboardType: TextInputType.number),
-            _buildField(label: "IBAN", controller: ibanController),
-            _buildField(label: "Description", controller: descriptionController, maxLines: 4),
+            _buildField(label: "Name", controller: nameController, isDark: isDark),
+            _buildField(label: "Address", controller: addressController, isDark: isDark),
+            _buildField(label: "Nr. of Guests", controller: guestsController, keyboardType: TextInputType.number, isDark: isDark),
+            _buildField(label: "Price per Night", controller: priceController, keyboardType: TextInputType.number, isDark: isDark),
+            _buildField(label: "IBAN", controller: ibanController, isDark: isDark),
+            _buildField(label: "Description", controller: descriptionController, maxLines: 4, isDark: isDark),
             const SizedBox(height: 16),
-            _buildImagePicker(),
+            _buildImagePicker(isDark),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: isUploading ? null : _submitAccommodation,
@@ -172,6 +177,7 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
   Widget _buildField({
     required String label,
     required TextEditingController controller,
+    bool isDark = false,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
   }) {
@@ -181,22 +187,24 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
+        style: TextStyle(color: isDark ? Colors.white : Colors.black),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
           filled: true,
-          fillColor: Colors.grey[200],
+          fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         ),
       ),
     );
   }
 
-  Widget _buildImagePicker() {
+  Widget _buildImagePicker(bool isDark) {
     final int imageCount = kIsWeb ? selectedWebFiles.length : selectedImages.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Photos ($imageCount)", style: const TextStyle(fontWeight: FontWeight.w500)),
+        Text("Photos ($imageCount)", style: TextStyle(fontWeight: FontWeight.w500, color: isDark ? Colors.white : Colors.black)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: _pickImages,
@@ -204,10 +212,10 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
             height: 120,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: isDark ? Colors.grey[700] : Colors.grey[300],
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.add_photo_alternate, size: 40),
+            child: Icon(Icons.add_photo_alternate, size: 40, color: isDark ? Colors.white : Colors.black),
           ),
         ),
         const SizedBox(height: 8),
@@ -216,10 +224,9 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
             spacing: 8,
             runSpacing: 8,
             children: (kIsWeb ? selectedWebFiles : selectedImages).map((file) {
-            final imageWidget = kIsWeb
-                ? Image.memory((file as PlatformFile).bytes!, width: 80, height: 80, fit: BoxFit.cover)
-                : Image.file(File((file as XFile).path), width: 80, height: 80, fit: BoxFit.cover);
-
+              final imageWidget = kIsWeb
+                  ? Image.memory((file as PlatformFile).bytes!, width: 80, height: 80, fit: BoxFit.cover)
+                  : Image.file(File((file as XFile).path), width: 80, height: 80, fit: BoxFit.cover);
 
               return Stack(
                 alignment: Alignment.topRight,
@@ -230,7 +237,6 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      
                       setState(() {
                         if (kIsWeb) {
                           selectedWebFiles.remove(file);

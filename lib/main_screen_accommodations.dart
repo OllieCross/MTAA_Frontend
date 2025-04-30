@@ -9,7 +9,6 @@ import 'accommondation_detail.dart';
 import 'server_config.dart';
 import 'package:geolocator/geolocator.dart';
 
-
 class MainScreenAccommodations extends StatefulWidget {
   const MainScreenAccommodations({super.key});
 
@@ -48,14 +47,14 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
         final data = jsonDecode(response.body);
         final baseList = data['results'];
         if (!mounted) return;
-          setState(() {
-            accommodations = baseList.map((item) {
-              return {
-                ...item,
-                'is_liked': item['is_liked'] ?? false,
-              };
-            }).toList();
-          });
+        setState(() {
+          accommodations = baseList.map((item) {
+            return {
+              ...item,
+              'is_liked': item['is_liked'] ?? false,
+            };
+          }).toList();
+        });
       } else {
         print("Error main-screen-accommodations: ${response.statusCode} - ${response.body}");
       }
@@ -97,7 +96,7 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
 
     if (response.statusCode == 200) {
       final message = jsonDecode(response.body)['message'];
-        if (!mounted) return;
+      if (!mounted) return;
       setState(() {
         accommodations[index]['is_liked'] = message == 'Liked accommodation';
       });
@@ -125,11 +124,13 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                     Expanded(
                       child: TextField(
                         controller: locationController,
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.location_on_outlined),
+                          prefixIcon: Icon(Icons.location_on_outlined, color: Theme.of(context).textTheme.bodyMedium!.color),
                           hintText: 'Location',
+                          hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
                           filled: true,
-                          fillColor: Colors.grey[300],
+                          fillColor: isDark ? Colors.grey[800] : Colors.grey[300],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
@@ -139,7 +140,7 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.my_location),
+                      icon: Icon(Icons.my_location, color: Theme.of(context).textTheme.bodyMedium!.color),
                       tooltip: 'Použiť moju polohu',
                       onPressed: () async {
                         try {
@@ -173,13 +174,13 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                   ],
                 ),
               ),
-
-              _buildDateField(),
+              _buildDateField(isDark),
               _buildInputField(
                 controller: guestController,
                 icon: Icons.group_outlined,
                 hint: 'Guests',
                 keyboardType: TextInputType.number,
+                isDark: isDark,
               ),
               const SizedBox(height: 10),
               ElevatedButton(
@@ -209,7 +210,7 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
               ),
               const SizedBox(height: 20),
               if (accommodations.isEmpty)
-                const Text("No accommodations available.", style: TextStyle(fontSize: 16))
+                Text("No accommodations available.", style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodyMedium!.color))
               else
                 ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),
@@ -294,6 +295,7 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
     required TextEditingController controller,
     required IconData icon,
     required String hint,
+    required bool isDark,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return Padding(
@@ -301,18 +303,20 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
         decoration: InputDecoration(
-          prefixIcon: Icon(icon),
+          prefixIcon: Icon(icon, color: Theme.of(context).textTheme.bodyMedium!.color),
           hintText: hint,
+          hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
           filled: true,
-          fillColor: Colors.grey[300],
+          fillColor: isDark ? Colors.grey[800] : Colors.grey[300],
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         ),
       ),
     );
   }
 
-  Widget _buildDateField() {
+  Widget _buildDateField(bool isDark) {
     return Column(
       children: [
         Row(
@@ -322,6 +326,8 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                 valueListenable: dateFromNotifier,
                 builder: (context, dateFrom, _) => _buildDateTile(
                   label: dateFrom == null ? 'from' : '${dateFrom.day}.${dateFrom.month}',
+                  isDark: isDark,
+                  context: context,
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: context,
@@ -340,6 +346,8 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                 valueListenable: dateToNotifier,
                 builder: (context, dateTo, _) => _buildDateTile(
                   label: dateTo == null ? 'to' : '${dateTo.day}.${dateTo.month}',
+                  isDark: isDark,
+                  context: context,
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: context,
@@ -359,17 +367,25 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
     );
   }
 
-  Widget _buildDateTile({required String label, required VoidCallback onTap}) {
+  Widget _buildDateTile({
+    required String label,
+    required VoidCallback onTap,
+    required bool isDark,
+    required BuildContext context,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 55,
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: isDark ? Colors.grey[800] : Colors.grey[300],
           borderRadius: BorderRadius.circular(10),
         ),
         alignment: Alignment.center,
-        child: Text(label),
+        child: Text(
+          label,
+          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
+        ),
       ),
     );
   }

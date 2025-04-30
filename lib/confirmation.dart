@@ -6,7 +6,9 @@ class ConfirmationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: isDark ? Colors.black : Colors.white,
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: Center(
         child: Padding(
