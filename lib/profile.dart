@@ -37,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        if (!mounted) return;
         setState(() {
           reservations = data['reservations'];
         });
@@ -62,6 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       if (response.statusCode == 200) {
+        if (!mounted) return;
         setState(() {
           reservations.removeWhere((r) => r['rid'] == rid);
         });

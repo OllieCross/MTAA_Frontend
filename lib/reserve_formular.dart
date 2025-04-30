@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'confirmation.dart';
 import 'server_config.dart';
+import 'dart:convert';
+
 
 class ReserveFormularScreen extends StatefulWidget {
   final Map<String, dynamic> accommodation;
@@ -20,24 +21,19 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final base64Image = widget.accommodation['images_base64']?[0];
-    Widget imageWidget;
+    final aid = widget.accommodation['aid'];
+    final token = globalToken;
 
-    if (base64Image != null && base64Image is String) {
-      try {
-        final cleaned = base64Image.replaceAll(RegExp(r'\s+'), '');
-        imageWidget = Image.memory(
-          base64Decode(cleaned),
-          width: 100,
-          height: 100,
-          fit: BoxFit.cover,
-        );
-      } catch (e) {
-        imageWidget = const Placeholder(fallbackWidth: 100, fallbackHeight: 100);
-      }
-    } else {
-      imageWidget = const Placeholder(fallbackWidth: 100, fallbackHeight: 100);
-    }
+    final imageUrl = 'http://$serverIp:$serverPort/accommodations/$aid/image/1';
+    final imageWidget = Image.network(
+      imageUrl,
+      width: 100,
+      height: 100,
+      fit: BoxFit.cover,
+      headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      errorBuilder: (context, error, stackTrace) =>
+          const Placeholder(fallbackWidth: 100, fallbackHeight: 100),
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text("Your Reservation")),
@@ -60,7 +56,7 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
                     children: [
                       Text(widget.accommodation['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      Text(widget.accommodation['location']),
+                      Text(widget.accommodation['location'] ?? ''),
                       const SizedBox(height: 4),
                       Text("${widget.accommodation['max_guests']} Guests"),
                     ],
@@ -69,20 +65,13 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
               ],
             ),
             const SizedBox(height: 24),
-
-            // Dátumový výber
             Row(
               children: [
-                Expanded(child: _buildDatePicker("From", fromDate, (picked) {
-                  setState(() => fromDate = picked);
-                })),
+                Expanded(child: _buildDatePicker("From", fromDate, (picked) => setState(() => fromDate = picked))),
                 const SizedBox(width: 12),
-                Expanded(child: _buildDatePicker("To", toDate, (picked) {
-                  setState(() => toDate = picked);
-                })),
+                Expanded(child: _buildDatePicker("To", toDate, (picked) => setState(() => toDate = picked))),
               ],
             ),
-
             const SizedBox(height: 24),
             _buildTextField(label: 'Name'),
             _buildTextField(label: 'Surname'),
@@ -103,7 +92,6 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
             _buildTextField(label: 'Phone number', keyboardType: TextInputType.phone),
             _buildTextField(label: 'Email address', keyboardType: TextInputType.emailAddress),
             const SizedBox(height: 20),
-
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(

@@ -15,6 +15,7 @@ class LikedScreen extends StatefulWidget {
 
 class _LikedScreenState extends State<LikedScreen> {
   List<dynamic> likedAccommodations = [];
+  String? jwtToken = globalToken;
 
   @override
   void initState() {
@@ -23,7 +24,7 @@ class _LikedScreenState extends State<LikedScreen> {
   }
 
   Future<void> _loadLiked() async {
-    final token = globalToken;
+    final token = jwtToken;
     final url = Uri.parse('http://$serverIp:$serverPort/liked-accommodations');
 
     try {
@@ -37,9 +38,10 @@ class _LikedScreenState extends State<LikedScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() {
-          likedAccommodations = data['liked_accommodations'];
-        });
+        if (!mounted) return;
+          setState(() {
+            likedAccommodations = data['liked_accommodations'];
+          });
       } else {
         print('Failed to fetch liked accommodations: ${response.body}');
       }
@@ -49,9 +51,9 @@ class _LikedScreenState extends State<LikedScreen> {
   }
 
   Future<void> _toggleLike(int aid) async {
-    final token = globalToken;
+    final token = jwtToken;
     final response = await http.post(
-      Uri.parse('http://127.0.0.1:5000/like_dislike'),
+      Uri.parse('http://$serverIp:$serverPort/like_dislike'),
       headers: {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
@@ -62,13 +64,27 @@ class _LikedScreenState extends State<LikedScreen> {
     if (response.statusCode == 200) {
       final message = jsonDecode(response.body)['message'];
       if (message == 'Unliked accommodation') {
-        setState(() {
-          likedAccommodations.removeWhere((item) => item['aid'] == aid);
-        });
+        if (!mounted) return;
+          setState(() {
+            likedAccommodations.removeWhere((item) => item['aid'] == aid);
+          });
       }
     } else {
       print('Like toggle error: ${response.body}');
     }
+  }
+
+  Widget _buildImage(int aid) {
+    final imageUrl = 'http://$serverIp:$serverPort/accommodations/$aid/image/1';
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      height: 180,
+      width: double.infinity,
+      headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
+      errorBuilder: (context, error, stackTrace) =>
+          const SizedBox(height: 180, child: Placeholder()),
+    );
   }
 
   @override
@@ -98,15 +114,6 @@ class _LikedScreenState extends State<LikedScreen> {
                       itemCount: likedAccommodations.length,
                       itemBuilder: (context, index) {
                         final item = likedAccommodations[index];
-                        final imageBase64 = item['image_base64'];
-                        final image = imageBase64 != null
-                            ? Image.memory(
-                                base64Decode(imageBase64.replaceAll(RegExp(r'\s+'), '')),
-                                fit: BoxFit.cover,
-                                height: 180,
-                                width: double.infinity,
-                              )
-                            : const SizedBox(height: 180, child: Placeholder());
 
                         return GestureDetector(
                           onTap: () {
@@ -126,7 +133,7 @@ class _LikedScreenState extends State<LikedScreen> {
                                   children: [
                                     ClipRRect(
                                       borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                                      child: image,
+                                      child: _buildImage(item['aid']),
                                     ),
                                     Positioned(
                                       top: 10,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'main.dart';
 import 'gallery.dart';
 import 'reserve_formular.dart';
 import 'server_config.dart';
+import 'dart:convert';
+
+typedef Json = Map<String, dynamic>;
 
 class AccommodationDetailScreen extends StatefulWidget {
   final int aid;
@@ -16,7 +18,8 @@ class AccommodationDetailScreen extends StatefulWidget {
 }
 
 class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
-  Map<String, dynamic>? data;
+  Json? data;
+  List<int> imageIndices = [];
   String? jwtToken = globalToken;
 
   @override
@@ -26,21 +29,38 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
   }
 
   Future<void> fetchAccommodationDetail() async {
-    final response = await http.get(
-      Uri.parse('http://$serverIp:$serverPort/accommodation/${widget.aid}'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('http://$serverIp:$serverPort/accommodation/${widget.aid}'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      setState(() {
-        data = jsonDecode(response.body)['accommodation'];
-      });
-    } else {
-      print('Error: ${response.body}');
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (!mounted) return;
+          setState(() {
+            data = Map<String, dynamic>.from(decoded['accommodation']);
+            imageIndices = [1, 2, 3]; // hardcoded na 3 obrázky
+          });
+      } else {
+        print('Server error: ${response.body}');
+      }
+    } catch (e) {
+      print('Network error: $e');
     }
+  }
+
+  Image buildImage(int index) {
+    return Image.network(
+      'http://$serverIp:$serverPort/accommodations/${widget.aid}/image/$index',
+      fit: BoxFit.cover,
+      headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
+      errorBuilder: (context, error, stackTrace) =>
+          const Center(child: Icon(Icons.broken_image)),
+    );
   }
 
   @override
@@ -51,17 +71,6 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
       );
     }
 
-    final imagesBase64 = data!['images_base64'] as List;
-    final List<Image> images = imagesBase64.map((b64) {
-      try {
-        final cleaned = b64.replaceAll(RegExp(r'\s+'), '');
-        return Image.memory(base64Decode(cleaned), fit: BoxFit.cover);
-      } catch (e) {
-        print("Base64 decode error: $e");
-        return const Image(image: AssetImage('assets/images/placeholder.jpg'));
-      }
-    }).toList();
-
     return Scaffold(
       appBar: AppBar(title: Text(data!['name'])),
       body: SingleChildScrollView(
@@ -69,7 +78,6 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gallery collage + button
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: SizedBox(
@@ -78,7 +86,9 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
                   children: [
                     Expanded(
                       flex: 2,
-                      child: images.isNotEmpty ? images[0] : const Placeholder(),
+                      child: imageIndices.isNotEmpty
+                          ? buildImage(imageIndices[0])
+                          : const Placeholder(),
                     ),
                     const SizedBox(width: 2),
                     Expanded(
@@ -86,13 +96,17 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
                       child: Column(
                         children: [
                           Expanded(
-                            child: images.length > 1 ? images[1] : const Placeholder(),
+                            child: imageIndices.length > 1
+                                ? buildImage(imageIndices[1])
+                                : const Placeholder(),
                           ),
                           const SizedBox(height: 2),
                           Expanded(
                             child: Stack(
                               children: [
-                                images.length > 2 ? images[2] : const Placeholder(),
+                                imageIndices.length > 2
+                                    ? buildImage(imageIndices[2])
+                                    : const Placeholder(),
                                 Positioned(
                                   bottom: 8,
                                   left: 8,
@@ -111,7 +125,7 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => GalleryScreen(images: imagesBase64.cast<String>()),
+                                          builder: (_) => GalleryScreen(aid: widget.aid, images: imageIndices),
                                         ),
                                       );
                                     },
@@ -137,9 +151,8 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
             if (data!['description'] != null)
               Text(data!['description'], textAlign: TextAlign.justify),
             const Divider(height: 30),
-            Text('Rating: X ${data!['average_rating']}'),
             Text('Owner: ${data!['owner_email']}'),
-            const SizedBox(height: 20), // <- tu je ten správne umiestnený SizedBox
+            const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(

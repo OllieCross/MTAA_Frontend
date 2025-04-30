@@ -14,6 +14,7 @@ class MyAccommodationsScreen extends StatefulWidget {
 
 class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
   List<dynamic> myAccommodations = [];
+  String? jwtToken = globalToken;
 
   @override
   void initState() {
@@ -22,7 +23,7 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
   }
 
   Future<void> _loadMyAccommodations() async {
-    final token = globalToken;
+    final token = jwtToken;
     final url = Uri.parse('http://$serverIp:$serverPort/my-accommodations');
 
     final response = await http.get(
@@ -35,16 +36,17 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      setState(() {
-        myAccommodations = data['accommodations'];
-      });
+      if (!mounted) return;
+        setState(() {
+          myAccommodations = data['accommodations'];
+        });
     } else {
       print("Fetch error: ${response.body}");
     }
   }
 
   Future<void> _deleteAccommodation(int aid) async {
-    final token = globalToken;
+    final token = jwtToken;
 
     final response = await http.delete(
       Uri.parse('http://$serverIp:$serverPort/delete-accommodation/$aid'),
@@ -66,6 +68,19 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
     }
   }
 
+  Widget _buildImage(int aid) {
+    final imageUrl = 'http://$serverIp:$serverPort/accommodations/$aid/image/1';
+    return Image.network(
+      imageUrl,
+      width: 100,
+      height: 100,
+      fit: BoxFit.cover,
+      headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
+      errorBuilder: (context, error, stackTrace) =>
+          const SizedBox(width: 100, height: 100, child: Placeholder()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,19 +95,6 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                     itemCount: myAccommodations.length,
                     itemBuilder: (context, index) {
                       final item = myAccommodations[index];
-                      final image = item['image_base64'] != null
-                          ? Image.memory(
-                              base64Decode(item['image_base64']
-                                  .replaceAll(RegExp(r'\s+'), '')),
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                            )
-                          : const SizedBox(
-                              width: 80,
-                              height: 80,
-                              child: Placeholder(),
-                            );
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
@@ -100,7 +102,7 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: image,
+                              child: _buildImage(item['aid']),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -127,9 +129,9 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => AddAccommodationScreen(
-                                          accommodation: item,
-                                        ),
+                                        builder: (_) =>
+                                            AddAccommodationScreen(
+                                                accommodation: item),
                                       ),
                                     );
                                   },

@@ -25,6 +25,7 @@ class SearchResultsScreen extends StatefulWidget {
 
 class _SearchResultsScreenState extends State<SearchResultsScreen> {
   List<dynamic> results = [];
+  String? jwtToken = globalToken;
 
   @override
   void initState() {
@@ -34,13 +35,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
   Future<void> _fetchSearchResults() async {
     final url = Uri.parse('http://$serverIp:$serverPort/search-accommodations');
-    final token = globalToken;
 
     final response = await http.post(
       url,
       headers: {
         'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
+        if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
       },
       body: jsonEncode({
         'location': widget.location,
@@ -52,12 +52,26 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+      if (!mounted) return;
       setState(() {
         results = data['results'];
       });
     } else {
       print("Search error: ${response.body}");
     }
+  }
+
+  Widget _buildImage(int aid) {
+    final imageUrl = 'http://$serverIp:$serverPort/accommodations/$aid/image/1';
+    return Image.network(
+      imageUrl,
+      width: double.infinity,
+      height: 200,
+      fit: BoxFit.cover,
+      headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
+      errorBuilder: (context, error, stackTrace) =>
+          const SizedBox(height: 200, child: Placeholder()),
+    );
   }
 
   @override
@@ -101,16 +115,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                     padding: const EdgeInsets.all(12),
                     itemBuilder: (context, index) {
                       final item = results[index];
-                      final image = item['image_base64'] != null
-                          ? Image.memory(
-                              base64Decode(item['image_base64']
-                                  .replaceAll(RegExp(r'\s+'), '')),
-                              fit: BoxFit.cover,
-                              height: 180,
-                              width: double.infinity,
-                            )
-                          : const SizedBox(height: 180, child: Placeholder());
-
                       return GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -128,7 +132,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                             children: [
                               ClipRRect(
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                                child: image,
+                                child: _buildImage(item['aid']),
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(12),

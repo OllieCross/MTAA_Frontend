@@ -25,6 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   
   Future<void> _onRegisterPressed() async {
     // Reset errors first
+    if (!mounted) return;
     setState(() {
       _emailErrorMessage = null;
       _passwordErrorMessage = null;

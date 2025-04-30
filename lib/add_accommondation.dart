@@ -55,9 +55,10 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
       try {
         final List<XFile> images = await picker.pickMultiImage();
         if (images.isNotEmpty) {
-          setState(() {
-            selectedImages.addAll(images);
-          });
+          if (!mounted) return;
+            setState(() {
+              selectedImages.addAll(images);
+            });
         }
       } catch (e) {
         debugPrint("Image picker error: $e");
@@ -76,7 +77,7 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
       );
       return;
     }
-
+    if (!mounted) return;
     setState(() => isUploading = true);
 
     final uri = Uri.parse('http://$serverIp:$serverPort/add-accommodation');
@@ -215,9 +216,10 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
             spacing: 8,
             runSpacing: 8,
             children: (kIsWeb ? selectedWebFiles : selectedImages).map((file) {
-              final imageWidget = kIsWeb
-                  ? Image.memory((file as PlatformFile).bytes!, width: 80, height: 80, fit: BoxFit.cover)
-                  : Image.file(File((file as XFile).path), width: 80, height: 80, fit: BoxFit.cover);
+            final imageWidget = kIsWeb
+                ? Image.memory((file as PlatformFile).bytes!, width: 80, height: 80, fit: BoxFit.cover)
+                : Image.file(File((file as XFile).path), width: 80, height: 80, fit: BoxFit.cover);
+
 
               return Stack(
                 alignment: Alignment.topRight,
@@ -228,6 +230,7 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
+                      
                       setState(() {
                         if (kIsWeb) {
                           selectedWebFiles.remove(file);
