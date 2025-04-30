@@ -7,6 +7,8 @@ import 'main.dart';
 import 'bottom_navbar.dart';
 import 'accommondation_detail.dart';
 import 'server_config.dart';
+import 'package:geolocator/geolocator.dart';
+
 
 class MainScreenAccommodations extends StatefulWidget {
   const MainScreenAccommodations({super.key});
@@ -116,11 +118,62 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              _buildInputField(
-                controller: locationController,
-                icon: Icons.location_on_outlined,
-                hint: 'Location',
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: locationController,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.location_on_outlined),
+                          hintText: 'Location',
+                          filled: true,
+                          fillColor: Colors.grey[300],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.my_location),
+                      tooltip: 'Použiť moju polohu',
+                      onPressed: () async {
+                        try {
+                          final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+                          final response = await http.post(
+                            Uri.parse('http://$serverIp:$serverPort/get-address'),
+                            headers: {
+                              'Content-Type': 'application/json',
+                              if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+                            },
+                            body: jsonEncode({
+                              'latitude': position.latitude,
+                              'longitude': position.longitude,
+                            }),
+                          );
+
+                          if (response.statusCode == 200) {
+                            final data = jsonDecode(response.body);
+                            final address = data['address'];
+                            setState(() {
+                              locationController.text = address;
+                            });
+                          } else {
+                            print("Reverse geocoding failed: ${response.body}");
+                          }
+                        } catch (e) {
+                          print("Location error: $e");
+                        }
+                      },
+                    )
+                  ],
+                ),
               ),
+
               _buildDateField(),
               _buildInputField(
                 controller: guestController,
