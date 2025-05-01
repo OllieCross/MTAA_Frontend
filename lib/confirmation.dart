@@ -1,33 +1,55 @@
 import 'package:flutter/material.dart';
-import 'bottom_navbar.dart'; // <- nezabudni na import
+import 'package:provider/provider.dart';
+import 'bottom_navbar.dart';
+import 'app_settings.dart';
 
 class ConfirmationScreen extends StatelessWidget {
   const ConfirmationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    final backgroundColor = highContrast
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+
+    final textColor = highContrast
+        ? (isDark ? Colors.white : Colors.black)
+        : (isDark ? Colors.white70 : Colors.black87);
+
+    final iconColor = highContrast
+        ? (isDark ? Colors.white : Colors.black)
+        : (isDark ? Colors.white60 : Colors.black87);
+
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
+      backgroundColor: backgroundColor,
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.home, size: 80),
-              Icon(Icons.verified, size: 40),
-              SizedBox(height: 20),
+            children: [
+              Icon(Icons.home, size: 80, color: iconColor),
+              const SizedBox(height: 8),
+              Icon(Icons.verified, size: 40, color: iconColor),
+              const SizedBox(height: 20),
               Text(
                 "Thank you for\nyour Reservation!",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 "Your reservation has been confirmed, please check\nyour email for more information.",
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: textColor.withOpacity(0.7)),
                 textAlign: TextAlign.center,
               ),
             ],

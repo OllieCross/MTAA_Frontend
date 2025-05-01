@@ -8,6 +8,8 @@ import 'bottom_navbar.dart';
 import 'accommondation_detail.dart';
 import 'server_config.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import 'app_settings.dart';
 
 class MainScreenAccommodations extends StatefulWidget {
   const MainScreenAccommodations({super.key});
@@ -32,42 +34,42 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
   }
 
   Future<void> _loadInitialRecommendations() async {
-      jwtToken = globalToken;
-      final response = await http.get(
-        Uri.parse('http://$serverIp:$serverPort/main-screen-accommodations'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final baseList = data['results'];
-        if (!mounted) return;
-        setState(() {
-          accommodations = baseList.map((item) {
-            return {
-              ...item,
-              'is_liked': item['is_liked'] ?? false,
-            };
-          }).toList();
-        });
-      }
+    jwtToken = globalToken;
+    final response = await http.get(
+      Uri.parse('http://$serverIp:$serverPort/main-screen-accommodations'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final baseList = data['results'];
+      if (!mounted) return;
+      setState(() {
+        accommodations = baseList.map((item) {
+          return {
+            ...item,
+            'is_liked': item['is_liked'] ?? false,
+          };
+        }).toList();
+      });
+    }
   }
 
   Future<Uint8List?> fetchAccommodationImage(int aid) async {
-      final response = await http.get(
-        Uri.parse('http://$serverIp:$serverPort/accommodations/$aid/image/1'),
-        headers: {
-          if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
-        },
-      );
-      if (response.statusCode == 200) {
-        return response.bodyBytes;
-      } else {
-        return null;
-      }
+    final response = await http.get(
+      Uri.parse('http://$serverIp:$serverPort/accommodations/$aid/image/1'),
+      headers: {
+        if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+      },
+    );
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      return null;
     }
+  }
 
   Future<void> toggleLike(int aid, int index) async {
     final response = await http.post(
@@ -89,10 +91,16 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
+    final backgroundColor = highContrast
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
+      backgroundColor: backgroundColor,
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -125,25 +133,24 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                       icon: Icon(Icons.my_location, color: Theme.of(context).textTheme.bodyMedium!.color),
                       tooltip: 'Použiť moju polohu',
                       onPressed: () async {
-                          final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-                          final response = await http.post(
-                            Uri.parse('http://$serverIp:$serverPort/get-address'),
-                            headers: {
-                              'Content-Type': 'application/json',
-                              if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
-                            },
-                            body: jsonEncode({
-                              'latitude': position.latitude,
-                              'longitude': position.longitude,
-                            }),
-                          );
-                          if (response.statusCode == 200) {
-                            final data = jsonDecode(response.body);
-                            final address = data['address'];
-                            setState(() {
-                              locationController.text = address;
-                            });
-                          }
+                        final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+                        final response = await http.post(
+                          Uri.parse('http://$serverIp:$serverPort/get-address'),
+                          headers: {
+                            'Content-Type': 'application/json',
+                            if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+                          },
+                          body: jsonEncode({
+                            'latitude': position.latitude,
+                            'longitude': position.longitude,
+                          }),
+                        );
+                        if (response.statusCode == 200) {
+                          final data = jsonDecode(response.body);
+                          setState(() {
+                            locationController.text = data['address'];
+                          });
+                        }
                       },
                     )
                   ],

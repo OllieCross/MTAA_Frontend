@@ -46,7 +46,7 @@ class BottomNavBar extends StatelessWidget {
 
     final backgroundColor = highContrast
         ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[100]);
+        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
 
     final selectedColor = highContrast
         ? (isDark ? Colors.white : Colors.black)

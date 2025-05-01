@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'main.dart';
 import 'accommondation_detail.dart';
 import 'server_config.dart';
+import 'app_settings.dart';
 
 class SearchResultsScreen extends StatefulWidget {
   final String location;
@@ -74,18 +76,33 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    final backgroundColor = highContrast
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+
+    final textColor = highContrast
+        ? (isDark ? Colors.white : Colors.black)
+        : (isDark ? Colors.white70 : Colors.black87);
+
+    final cardColor = highContrast
+        ? (isDark ? Colors.grey[900] : Colors.white)
+        : (isDark ? Colors.grey[800] : Colors.grey[200]);
+
     final dateRange =
         '${widget.dateFrom.day}.${widget.dateFrom.month}. - ${widget.dateTo.day}.${widget.dateTo.month}.';
     final header =
         '${widget.location[0].toUpperCase()}${widget.location.substring(1)}, ${widget.guests} Guest${widget.guests > 1 ? 's' : ''}';
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text('Results'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: backgroundColor,
+        foregroundColor: textColor,
         elevation: 0.5,
       ),
       body: Column(
@@ -95,21 +112,21 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: cardColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 children: [
-                  Text(header, style: const TextStyle(fontSize: 16)),
+                  Text(header, style: TextStyle(fontSize: 16, color: textColor)),
                   const SizedBox(height: 4),
-                  Text(dateRange, style: const TextStyle(color: Colors.grey)),
+                  Text(dateRange, style: TextStyle(color: textColor.withOpacity(0.7))),
                 ],
               ),
             ),
           ),
           Expanded(
             child: results.isEmpty
-                ? const Center(child: Text('No results found'))
+                ? Center(child: Text('No results found', style: TextStyle(color: textColor)))
                 : ListView.builder(
                     itemCount: results.length,
                     padding: const EdgeInsets.all(12),
@@ -126,6 +143,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                           );
                         },
                         child: Card(
+                          color: cardColor,
                           margin: const EdgeInsets.only(bottom: 16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,9 +157,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item['location'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                    Text(item['location'], style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textColor)),
                                     const SizedBox(height: 4),
-                                    Text('${item['price_per_night']} € / Night', style: const TextStyle(fontSize: 14)),
+                                    Text('${item['price_per_night']} € / Night', style: TextStyle(fontSize: 14, color: textColor)),
                                   ],
                                 ),
                               ),

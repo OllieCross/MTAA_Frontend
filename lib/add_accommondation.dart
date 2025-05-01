@@ -114,7 +114,7 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
 
     final backgroundColor = highContrast
         ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[100]);
+        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
 
     final textColor = highContrast
         ? (isDark ? Colors.white : Colors.black)

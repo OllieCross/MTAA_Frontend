@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+
 import 'main.dart';
 import 'add_accommondation.dart';
 import 'server_config.dart';
+import 'app_settings.dart';
 
 class MyAccommodationsScreen extends StatefulWidget {
   const MyAccommodationsScreen({super.key});
@@ -37,9 +40,9 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       if (!mounted) return;
-        setState(() {
-          myAccommodations = data['accommodations'];
-        });
+      setState(() {
+        myAccommodations = data['accommodations'];
+      });
     }
   }
 
@@ -81,15 +84,39 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    
+    final backgroundColor = highContrast
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+
+    final textColor = highContrast
+        ? (isDark ? Colors.white : Colors.black)
+        : (isDark ? Colors.white70 : Colors.black87);
+
+    final cardColor = highContrast
+        ? (isDark ? Colors.grey[900] : Colors.white)
+        : (isDark ? Colors.grey[800] : Colors.grey[200]);
+
+    final iconColor = textColor;
+
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
-      appBar: AppBar(title: const Text("My Accommodations")),
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        title: const Text("My Accommodations"),
+        backgroundColor: backgroundColor,
+        foregroundColor: textColor,
+        elevation: 0,
+      ),
       body: Column(
         children: [
           Expanded(
             child: myAccommodations.isEmpty
-                ? const Center(child: Text("No accommodations found."))
+                ? Center(
+                    child: Text("No accommodations found.",
+                        style: TextStyle(color: textColor)))
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: myAccommodations.length,
@@ -98,6 +125,18 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isDark ? Colors.black26 : Colors.black12,
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
                         child: Row(
                           children: [
                             ClipRRect(
@@ -110,13 +149,14 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(item['name'],
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 16,
-                                          fontWeight: FontWeight.bold)),
+                                          fontWeight: FontWeight.bold,
+                                          color: textColor)),
                                   const SizedBox(height: 4),
                                   Text(
                                     "${item['city']}, ${item['country']}",
-                                    style: const TextStyle(color: Colors.grey),
+                                    style: TextStyle(color: textColor),
                                   ),
                                 ],
                               ),
@@ -124,20 +164,19 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                             Column(
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.edit),
+                                  icon: Icon(Icons.edit, color: iconColor),
                                   onPressed: () {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            AddAccommodationScreen(
-                                                accommodation: item),
+                                        builder: (_) => AddAccommodationScreen(
+                                            accommodation: item),
                                       ),
                                     );
                                   },
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete),
+                                  icon: Icon(Icons.delete, color: iconColor),
                                   onPressed: () =>
                                       _deleteAccommodation(item['aid']),
                                 ),
@@ -169,8 +208,8 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
               },
               child: const Text(
                 "Add Accommodation",
-                style:
-                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'main.dart';
 import 'gallery.dart';
 import 'reserve_formular.dart';
 import 'server_config.dart';
+import 'app_settings.dart';
 import 'dart:convert';
 
 typedef Json = Map<String, dynamic>;
@@ -29,22 +31,22 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
   }
 
   Future<void> fetchAccommodationDetail() async {
-      final response = await http.get(
-        Uri.parse('http://$serverIp:$serverPort/accommodation/${widget.aid}'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
-        },
-      );
+    final response = await http.get(
+      Uri.parse('http://$serverIp:$serverPort/accommodation/${widget.aid}'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        if (!mounted) return;
-          setState(() {
-            data = Map<String, dynamic>.from(decoded['accommodation']);
-            imageIndices = [1, 2, 3]; // hardcoded na 3 obrázky
-          });
-      }
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      if (!mounted) return;
+      setState(() {
+        data = Map<String, dynamic>.from(decoded['accommodation']);
+        imageIndices = [1, 2, 3]; // hardcoded na 3 obrázky
+      });
+    }
   }
 
   Image buildImage(int index) {
@@ -59,16 +61,34 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    final backgroundColor = highContrast
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+
+    final textColor = highContrast
+        ? (isDark ? Colors.white60 : Colors.black)
+        : (isDark ? Colors.grey[800]! : Colors.black87);
+
+
     if (data == null) {
       return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
+        backgroundColor: backgroundColor,
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(data!['name'])),
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        foregroundColor: textColor,
+        elevation: 0,
+        title: Text(data!['name']),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -108,7 +128,7 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
                                   left: 8,
                                   child: ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
+                                      backgroundColor: highContrast ? Colors.white : Colors.grey[200],
                                       foregroundColor: Colors.black,
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                       shape: RoundedRectangleBorder(
@@ -138,16 +158,16 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Text(data!['location'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(data!['location'], style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
             const SizedBox(height: 6),
-            Text('${data!['price_per_night']} € / night'),
+            Text('${data!['price_per_night']} € / night', style: TextStyle(color: textColor)),
             const SizedBox(height: 10),
-            Text('Max guests: ${data!['max_guests']}'),
+            Text('Max guests: ${data!['max_guests']}', style: TextStyle(color: textColor)),
             const SizedBox(height: 10),
             if (data!['description'] != null)
-              Text(data!['description'], textAlign: TextAlign.justify),
+              Text(data!['description'], textAlign: TextAlign.justify, style: TextStyle(color: textColor)),
             const Divider(height: 30),
-            Text('Owner: ${data!['owner_email']}'),
+            Text('Owner: ${data!['owner_email']}', style: TextStyle(color: textColor)),
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(

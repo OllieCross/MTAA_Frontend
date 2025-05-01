@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 class AppSettings extends ChangeNotifier {
   double _textScaleFactor = 1.0;     // 1.0 = malý, 1.4 = veľký
-  bool   _highContrast     = false;  // false = normálny, true = vysoký
+  bool   _highContrast     = true;  // false = normálny, true = vysoký
 
   double get textScaleFactor => _textScaleFactor;
   bool   get highContrast     => _highContrast;

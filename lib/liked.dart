@@ -5,6 +5,8 @@ import 'bottom_navbar.dart';
 import 'main.dart';
 import 'accommondation_detail.dart';
 import 'server_config.dart';
+import 'package:provider/provider.dart';
+import 'app_settings.dart';
 
 class LikedScreen extends StatefulWidget {
   const LikedScreen({super.key});
@@ -27,21 +29,21 @@ class _LikedScreenState extends State<LikedScreen> {
     final token = jwtToken;
     final url = Uri.parse('http://$serverIp:$serverPort/liked-accommodations');
 
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-      );
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (!mounted) return;
-          setState(() {
-            likedAccommodations = data['liked_accommodations'];
-          });
-      }
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (!mounted) return;
+      setState(() {
+        likedAccommodations = data['liked_accommodations'];
+      });
+    }
   }
 
   Future<void> _toggleLike(int aid) async {
@@ -59,15 +61,16 @@ class _LikedScreenState extends State<LikedScreen> {
       final message = jsonDecode(response.body)['message'];
       if (message == 'Unliked accommodation') {
         if (!mounted) return;
-          setState(() {
-            likedAccommodations.removeWhere((item) => item['aid'] == aid);
-          });
+        setState(() {
+          likedAccommodations.removeWhere((item) => item['aid'] == aid);
+        });
       }
     }
   }
 
   Widget _buildImage(int aid) {
-    final imageUrl = 'http://$serverIp:$serverPort/accommodations/$aid/image/1';
+    final imageUrl =
+        'http://$serverIp:$serverPort/accommodations/$aid/image/1';
     return Image.network(
       imageUrl,
       fit: BoxFit.cover,
@@ -81,23 +84,45 @@ class _LikedScreenState extends State<LikedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    final backgroundColor = highContrast
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+    final textColor = highContrast
+        ? (isDark ? const Color.fromARGB(255, 150, 150, 150) : Colors.black)
+        : (isDark ? const Color.fromARGB(255, 150, 150, 150) : Colors.black87);
+    final boxColor = highContrast
+        ? (isDark ? Colors.grey[900] : Colors.white)
+        : (isDark ? Colors.grey[800] : Colors.grey[200]);
+
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
+      backgroundColor: backgroundColor,
       bottomNavigationBar: const BottomNavBar(currentIndex: 1),
       body: SafeArea(
         child: likedAccommodations.isEmpty
-            ? const Center(child: Text("No liked accommodations found."))
+            ? Center(
+                child: Text(
+                  "No liked accommodations found.",
+                  style: TextStyle(color: textColor),
+                ),
+              )
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    const Icon(Icons.favorite_border, size: 48),
+                    Icon(Icons.favorite_border, size: 48, color: textColor),
                     const SizedBox(height: 8),
-                    const Center(
+                    Center(
                       child: Text(
                         "Your likes",
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -113,11 +138,13 @@ class _LikedScreenState extends State<LikedScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => AccommodationDetailScreen(aid: item['aid']),
+                                builder: (_) =>
+                                    AccommodationDetailScreen(aid: item['aid']),
                               ),
                             );
                           },
                           child: Card(
+                            color: boxColor,
                             margin: const EdgeInsets.only(bottom: 16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,15 +152,18 @@ class _LikedScreenState extends State<LikedScreen> {
                                 Stack(
                                   children: [
                                     ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                                      borderRadius: const BorderRadius.vertical(
+                                          top: Radius.circular(10)),
                                       child: _buildImage(item['aid']),
                                     ),
                                     Positioned(
                                       top: 10,
                                       right: 10,
                                       child: IconButton(
-                                        icon: const Icon(Icons.favorite, color: Colors.red),
-                                        onPressed: () => _toggleLike(item['aid']),
+                                        icon: const Icon(Icons.favorite,
+                                            color: Colors.red),
+                                        onPressed: () =>
+                                            _toggleLike(item['aid']),
                                       ),
                                     ),
                                   ],
@@ -141,11 +171,25 @@ class _LikedScreenState extends State<LikedScreen> {
                                 Padding(
                                   padding: const EdgeInsets.all(12),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(item['location'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                      Text(
+                                        item['location'],
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: textColor,
+                                        ),
+                                      ),
                                       const SizedBox(height: 4),
-                                      Text('${item['price_per_night']} € / Night', style: const TextStyle(fontSize: 14)),
+                                      Text(
+                                        '${item['price_per_night']} € / Night',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: textColor,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),

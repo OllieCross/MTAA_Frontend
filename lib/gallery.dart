@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'main.dart'; // pre globalToken
 import 'server_config.dart';
+import 'app_settings.dart';
 
 class GalleryScreen extends StatelessWidget {
   final List<int> images; // indexy obrázkov (napr. [1, 2, 3])
@@ -10,12 +13,24 @@ class GalleryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    final backgroundColor = highContrast
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+
     final String? jwtToken = globalToken;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
-      appBar: AppBar(title: const Text('Gallery')),
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        foregroundColor: isDark ? Colors.white : Colors.black,
+        title: const Text('Gallery'),
+        elevation: 0,
+      ),
       body: GridView.builder(
         padding: const EdgeInsets.all(8),
         itemCount: images.length,
