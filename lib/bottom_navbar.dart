@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'main_screen_accommodations.dart';
 import 'liked.dart';
 import 'profile.dart';
+import 'app_settings.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -38,18 +40,28 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    final Color selectedColor = isDark ? Colors.white : Colors.black;
-    final Color unselectedColor = isDark ? Colors.white70 : Colors.grey;
-    final Color bgColor = isDark ? Colors.black : Colors.white;
+    final backgroundColor = highContrast
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? const Color(0xFF121212) : Colors.grey[100]);
+
+    final selectedColor = highContrast
+        ? (isDark ? Colors.white : Colors.black)
+        : (isDark ? Colors.white : Colors.black);
+
+    final unselectedColor = highContrast
+        ? (isDark ? Colors.grey[500]! : Colors.grey[700]!)
+        : (isDark ? Colors.white70 : Colors.grey);
 
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: (index) => _onTap(context, index),
       selectedItemColor: selectedColor,
       unselectedItemColor: unselectedColor,
-      backgroundColor: bgColor,
+      backgroundColor: backgroundColor,
       showSelectedLabels: true,
       showUnselectedLabels: true,
       items: [
