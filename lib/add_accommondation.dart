@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'main.dart';
 import 'server_config.dart';
+import 'app_settings.dart';
 
 class AddAccommodationScreen extends StatefulWidget {
   final Map<String, dynamic>? accommodation;
@@ -106,28 +108,46 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    final backgroundColor = highContrast
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? const Color(0xFF121212) : Colors.grey[100]);
+
+    final textColor = highContrast
+        ? (isDark ? Colors.white : Colors.black)
+        : (isDark ? Colors.white70 : Colors.black87);
+
+    final Color fillColor = isDark
+    ? (Colors.grey[800] ?? Colors.grey)
+    : (Colors.grey[100] ?? Colors.grey);
+
+
+
     final isEdit = widget.accommodation != null;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.grey[900] : null,
-        foregroundColor: isDark ? Colors.white : null,
+        backgroundColor: backgroundColor,
+        foregroundColor: textColor,
+        elevation: 0,
         title: Text(isEdit ? "Edit Accommodation" : "Add Accommodation"),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildField(label: "Name", controller: nameController, isDark: isDark),
-            _buildField(label: "Address", controller: addressController, isDark: isDark),
-            _buildField(label: "Nr. of Guests", controller: guestsController, keyboardType: TextInputType.number, isDark: isDark),
-            _buildField(label: "Price per Night", controller: priceController, keyboardType: TextInputType.number, isDark: isDark),
-            _buildField(label: "IBAN", controller: ibanController, isDark: isDark),
-            _buildField(label: "Description", controller: descriptionController, maxLines: 4, isDark: isDark),
+            _buildField(label: "Name", controller: nameController, fillColor: fillColor, textColor: textColor),
+            _buildField(label: "Address", controller: addressController, fillColor: fillColor, textColor: textColor),
+            _buildField(label: "Nr. of Guests", controller: guestsController, keyboardType: TextInputType.number, fillColor: fillColor, textColor: textColor),
+            _buildField(label: "Price per Night", controller: priceController, keyboardType: TextInputType.number, fillColor: fillColor, textColor: textColor),
+            _buildField(label: "IBAN", controller: ibanController, fillColor: fillColor, textColor: textColor),
+            _buildField(label: "Description", controller: descriptionController, maxLines: 4, fillColor: fillColor, textColor: textColor),
             const SizedBox(height: 16),
-            _buildImagePicker(isDark),
+            _buildImagePicker(fillColor, textColor),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: isUploading ? null : _submitAccommodation,
@@ -151,7 +171,8 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
   Widget _buildField({
     required String label,
     required TextEditingController controller,
-    bool isDark = false,
+    required Color fillColor,
+    required Color textColor,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
   }) {
@@ -161,23 +182,23 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
-        style: TextStyle(color: isDark ? Colors.white : Colors.black),
+        style: TextStyle(color: textColor),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
+          labelStyle: TextStyle(color: textColor.withOpacity(0.8)),
           filled: true,
-          fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+          fillColor: fillColor,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         ),
       ),
     );
   }
 
-  Widget _buildImagePicker(bool isDark) {
+  Widget _buildImagePicker(Color fillColor, Color textColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Photos (${selectedImages.length})", style: TextStyle(fontWeight: FontWeight.w500, color: isDark ? Colors.white : Colors.black)),
+        Text("Photos (${selectedImages.length})", style: TextStyle(fontWeight: FontWeight.w500, color: textColor)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: _pickImages,
@@ -185,10 +206,10 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
             height: 120,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: isDark ? Colors.grey[700] : Colors.grey[300],
+              color: fillColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.add_photo_alternate, size: 40, color: isDark ? Colors.white : Colors.black),
+            child: Icon(Icons.add_photo_alternate, size: 40, color: textColor),
           ),
         ),
         const SizedBox(height: 8),
