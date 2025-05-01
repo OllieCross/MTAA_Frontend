@@ -25,35 +25,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadReservations() async {
     final url = Uri.parse('http://$serverIp:$serverPort/my-reservations');
     final token = globalToken;
-
-    try {
-      final response = await http.get(
+    final response = await http.get(
         url,
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
         },
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (!mounted) return;
         setState(() {
           reservations = data['reservations'];
         });
-      } else {
-        print("Failed to load reservations: ${response.body}");
       }
-    } catch (e) {
-      print("Error: $e");
-    }
   }
 
   Future<void> _deleteReservation(int rid) async {
     final url = Uri.parse('http://127.0.0.1:5000/delete-reservation/$rid');
     final token = globalToken;
 
-    try {
       final response = await http.delete(
         url,
         headers: {
@@ -67,12 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           reservations.removeWhere((r) => r['rid'] == rid);
         });
-      } else {
-        print("Delete failed: ${response.body}");
       }
-    } catch (e) {
-      print("Error: $e");
-    }
   }
 
   @override

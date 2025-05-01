@@ -1,9 +1,7 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
 import 'main.dart';
 import 'server_config.dart';
 
@@ -25,9 +23,7 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
   final descriptionController = TextEditingController();
 
   final List<XFile> selectedImages = [];
-  final List<PlatformFile> selectedWebFiles = [];
   final ImagePicker picker = ImagePicker();
-
   bool isUploading = false;
 
   @override
@@ -40,28 +36,16 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
   }
 
   Future<void> _pickImages() async {
-    if (kIsWeb) {
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: true,
-        type: FileType.image,
-      );
-      if (result != null) {
+    try {
+      final List<XFile> images = await picker.pickMultiImage();
+      if (images.isNotEmpty) {
+        if (!mounted) return;
         setState(() {
-          selectedWebFiles.addAll(result.files);
+          selectedImages.addAll(images);
         });
       }
-    } else {
-      try {
-        final List<XFile> images = await picker.pickMultiImage();
-        if (images.isNotEmpty) {
-          if (!mounted) return;
-          setState(() {
-            selectedImages.addAll(images);
-          });
-        }
-      } catch (e) {
-        debugPrint("Image picker error: $e");
-      }
+    } catch (e) {
+      debugPrint("Image picker error: $e");
     }
   }
 
@@ -69,13 +53,13 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     final token = globalToken;
     if (token == null) return;
 
-    final totalImages = kIsWeb ? selectedWebFiles.length : selectedImages.length;
-    if (totalImages < 3) {
+    if (selectedImages.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select at least 3 images.")),
       );
       return;
     }
+
     if (!mounted) return;
     setState(() => isUploading = true);
 
@@ -89,18 +73,8 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
       ..fields['iban'] = ibanController.text
       ..fields['description'] = descriptionController.text;
 
-    if (kIsWeb) {
-      for (var file in selectedWebFiles) {
-        request.files.add(http.MultipartFile.fromBytes(
-          'images',
-          file.bytes!,
-          filename: file.name,
-        ));
-      }
-    } else {
-      for (var image in selectedImages) {
-        request.files.add(await http.MultipartFile.fromPath('images', image.path));
-      }
+    for (var image in selectedImages) {
+      request.files.add(await http.MultipartFile.fromPath('images', image.path));
     }
 
     final response = await request.send();
@@ -200,11 +174,10 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
   }
 
   Widget _buildImagePicker(bool isDark) {
-    final int imageCount = kIsWeb ? selectedWebFiles.length : selectedImages.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Photos ($imageCount)", style: TextStyle(fontWeight: FontWeight.w500, color: isDark ? Colors.white : Colors.black)),
+        Text("Photos (${selectedImages.length})", style: TextStyle(fontWeight: FontWeight.w500, color: isDark ? Colors.white : Colors.black)),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: _pickImages,
@@ -219,30 +192,22 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        if (imageCount > 0)
+        if (selectedImages.isNotEmpty)
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: (kIsWeb ? selectedWebFiles : selectedImages).map((file) {
-              final imageWidget = kIsWeb
-                  ? Image.memory((file as PlatformFile).bytes!, width: 80, height: 80, fit: BoxFit.cover)
-                  : Image.file(File((file as XFile).path), width: 80, height: 80, fit: BoxFit.cover);
-
+            children: selectedImages.map((image) {
               return Stack(
                 alignment: Alignment.topRight,
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: imageWidget,
+                    child: Image.file(File(image.path), width: 80, height: 80, fit: BoxFit.cover),
                   ),
                   GestureDetector(
                     onTap: () {
                       setState(() {
-                        if (kIsWeb) {
-                          selectedWebFiles.remove(file);
-                        } else {
-                          selectedImages.remove(file);
-                        }
+                        selectedImages.remove(image);
                       });
                     },
                     child: const CircleAvatar(

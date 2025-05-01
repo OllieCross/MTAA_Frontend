@@ -40,8 +40,6 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
         setState(() {
           myAccommodations = data['accommodations'];
         });
-    } else {
-      print("Fetch error: ${response.body}");
     }
   }
 

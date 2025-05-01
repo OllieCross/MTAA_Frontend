@@ -27,7 +27,6 @@ class _LikedScreenState extends State<LikedScreen> {
     final token = jwtToken;
     final url = Uri.parse('http://$serverIp:$serverPort/liked-accommodations');
 
-    try {
       final response = await http.get(
         url,
         headers: {
@@ -42,12 +41,7 @@ class _LikedScreenState extends State<LikedScreen> {
           setState(() {
             likedAccommodations = data['liked_accommodations'];
           });
-      } else {
-        print('Failed to fetch liked accommodations: ${response.body}');
       }
-    } catch (e) {
-      print('Error fetching liked accommodations: $e');
-    }
   }
 
   Future<void> _toggleLike(int aid) async {
@@ -69,8 +63,6 @@ class _LikedScreenState extends State<LikedScreen> {
             likedAccommodations.removeWhere((item) => item['aid'] == aid);
           });
       }
-    } else {
-      print('Like toggle error: ${response.body}');
     }
   }
 

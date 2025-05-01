@@ -32,9 +32,7 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
   }
 
   Future<void> _loadInitialRecommendations() async {
-    try {
       jwtToken = globalToken;
-
       final response = await http.get(
         Uri.parse('http://$serverIp:$serverPort/main-screen-accommodations'),
         headers: {
@@ -42,7 +40,6 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
           if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
         },
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final baseList = data['results'];
@@ -55,34 +52,22 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
             };
           }).toList();
         });
-      } else {
-        print("Error main-screen-accommodations: ${response.statusCode} - ${response.body}");
       }
-    } catch (e) {
-      print("Error fetching accommodations: $e");
-    }
   }
 
   Future<Uint8List?> fetchAccommodationImage(int aid) async {
-    try {
       final response = await http.get(
         Uri.parse('http://$serverIp:$serverPort/accommodations/$aid/image/1'),
         headers: {
           if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
         },
       );
-
       if (response.statusCode == 200) {
         return response.bodyBytes;
       } else {
-        print("Failed to load image for AID $aid: ${response.statusCode}");
         return null;
       }
-    } catch (e) {
-      print("Exception fetching image for AID $aid: $e");
-      return null;
     }
-  }
 
   Future<void> toggleLike(int aid, int index) async {
     final response = await http.post(
@@ -93,15 +78,12 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
       },
       body: jsonEncode({'aid': aid}),
     );
-
     if (response.statusCode == 200) {
       final message = jsonDecode(response.body)['message'];
       if (!mounted) return;
       setState(() {
         accommodations[index]['is_liked'] = message == 'Liked accommodation';
       });
-    } else {
-      print('Like toggle error: ${response.body}');
     }
   }
 
@@ -143,7 +125,6 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                       icon: Icon(Icons.my_location, color: Theme.of(context).textTheme.bodyMedium!.color),
                       tooltip: 'Použiť moju polohu',
                       onPressed: () async {
-                        try {
                           final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
                           final response = await http.post(
                             Uri.parse('http://$serverIp:$serverPort/get-address'),
@@ -156,19 +137,13 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                               'longitude': position.longitude,
                             }),
                           );
-
                           if (response.statusCode == 200) {
                             final data = jsonDecode(response.body);
                             final address = data['address'];
                             setState(() {
                               locationController.text = address;
                             });
-                          } else {
-                            print("Reverse geocoding failed: ${response.body}");
                           }
-                        } catch (e) {
-                          print("Location error: $e");
-                        }
                       },
                     )
                   ],

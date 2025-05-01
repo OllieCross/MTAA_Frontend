@@ -29,7 +29,6 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
   }
 
   Future<void> fetchAccommodationDetail() async {
-    try {
       final response = await http.get(
         Uri.parse('http://$serverIp:$serverPort/accommodation/${widget.aid}'),
         headers: {
@@ -45,12 +44,7 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
             data = Map<String, dynamic>.from(decoded['accommodation']);
             imageIndices = [1, 2, 3]; // hardcoded na 3 obrázky
           });
-      } else {
-        print('Server error: ${response.body}');
       }
-    } catch (e) {
-      print('Network error: $e');
-    }
   }
 
   Image buildImage(int index) {

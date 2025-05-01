@@ -56,8 +56,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       setState(() {
         results = data['results'];
       });
-    } else {
-      print("Search error: ${response.body}");
     }
   }
 
