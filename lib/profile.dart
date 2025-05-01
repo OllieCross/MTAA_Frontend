@@ -46,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _deleteReservation(int rid) async {
-    final url = Uri.parse('http://127.0.0.1:5000/delete-reservation/$rid');
+    final url = Uri.parse('http://$serverIp:$serverPort/delete-reservation/$rid');
     final token = globalToken;
 
     final response = await http.delete(

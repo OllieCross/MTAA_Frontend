@@ -133,7 +133,31 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                       icon: Icon(Icons.my_location, color: Theme.of(context).textTheme.bodyMedium!.color),
                       tooltip: 'Použiť moju polohu',
                       onPressed: () async {
-                        final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+                        
+                        LocationPermission permission = await Geolocator.checkPermission();
+
+                        if (permission == LocationPermission.denied) {
+                          permission = await Geolocator.requestPermission();
+                          if (permission == LocationPermission.denied) {
+                            // Permission denied - handle gracefully
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Location permission was denied.')),
+                            );
+                            return;
+                          }
+                        }
+                        if (permission == LocationPermission.deniedForever) {
+                          // Permission permanently denied
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Location permission is permanently denied. Please enable it in settings.')),
+                          );
+                          return;
+                        }
+                        final position = await Geolocator.getCurrentPosition(
+                        locationSettings: const LocationSettings(
+                          accuracy: LocationAccuracy.medium,
+                        ),
+                      );
                         final response = await http.post(
                           Uri.parse('http://$serverIp:$serverPort/get-address'),
                           headers: {
