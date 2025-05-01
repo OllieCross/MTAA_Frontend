@@ -5,12 +5,19 @@ import 'register.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'server_config.dart';
+import 'package:provider/provider.dart';
+import 'app_settings.dart';
 
 String? globalToken;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const RoomFinderApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AppSettings(),
+      child: const RoomFinderApp(),
+    ),
+  );
 }
 
 class RoomFinderApp extends StatelessWidget {
