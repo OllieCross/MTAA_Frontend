@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-
 import 'main.dart';
 import 'my_accommodations.dart';
 import 'bottom_navbar.dart';
@@ -46,7 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _deleteReservation(int rid) async {
-    final url = Uri.parse('http://127.0.0.1:5000/delete-reservation/$rid');
+    final url = Uri.parse('http://$serverIp:$serverPort/delete-reservation/$rid');
     final token = globalToken;
 
     final response = await http.delete(

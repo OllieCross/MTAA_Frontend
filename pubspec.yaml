@@ -1,4 +1,4 @@
-name: RoomFinder
+name: roomfinder
 description: "A new Flutter project."
 publish_to: 'none'
 version: 1.0.0+1
@@ -12,6 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^0.13.6
   image_picker: ^1.0.4
+  provider: ^6.1.5
 
 dev_dependencies:
   flutter_test:
