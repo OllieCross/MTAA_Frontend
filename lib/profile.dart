@@ -6,8 +6,8 @@ import 'main.dart';
 import 'my_accommodations.dart';
 import 'bottom_navbar.dart';
 import 'server_config.dart';
-import 'accessibility_buttons.dart';
 import 'app_settings.dart';
+import 'accessibility_buttons.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

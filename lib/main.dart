@@ -26,9 +26,10 @@ class RoomFinderApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: MediaQuery.of(context).platformBrightness == Brightness.dark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      value:
+          MediaQuery.of(context).platformBrightness == Brightness.dark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData.light(),
@@ -57,22 +58,25 @@ class LoginScreenState extends State<LoginScreen> {
   String? _loginErrorMessage;
 
   bool _isValidEmail(String email) {
-    final RegExp regex =
-        RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
+    final RegExp regex = RegExp(
+      r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
+    );
     return regex.hasMatch(email);
   }
 
   /// 1) Perform only local validation here
   void _validateFields() {
     setState(() {
-      _emailError = _emailController.text.isEmpty ||
+      _emailError =
+          _emailController.text.isEmpty ||
           !_isValidEmail(_emailController.text);
       _passwordError = _passwordController.text.isEmpty;
-      _emailErrorMessage = _emailController.text.isEmpty
-          ? "This text field cannot be empty"
-          : (!_isValidEmail(_emailController.text)
-              ? "Invalid email format"
-              : null);
+      _emailErrorMessage =
+          _emailController.text.isEmpty
+              ? "This text field cannot be empty"
+              : (!_isValidEmail(_emailController.text)
+                  ? "Invalid email format"
+                  : null);
     });
   }
 
@@ -88,7 +92,6 @@ class LoginScreenState extends State<LoginScreen> {
 
     final email = _emailController.text;
     final password = _passwordController.text;
-
 
     try {
       // 4) Send the hashed password to match what Flask is expecting
@@ -119,7 +122,8 @@ class LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final isDarkMode =
+        MediaQuery.of(context).platformBrightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor:
@@ -179,8 +183,10 @@ class LoginScreenState extends State<LoginScreen> {
                       errorText: _emailError ? _emailErrorMessage : null,
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            const BorderSide(color: Colors.red, width: 2),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
@@ -222,8 +228,7 @@ class LoginScreenState extends State<LoginScreen> {
                           _obscurePassword
                               ? Icons.visibility
                               : Icons.visibility_off,
-                          color:
-                              isDarkMode ? Colors.white70 : Colors.black54,
+                          color: isDarkMode ? Colors.white70 : Colors.black54,
                         ),
                         onPressed: () {
                           setState(() {
@@ -235,13 +240,16 @@ class LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none,
                       ),
-                      errorText: _passwordError
-                          ? "This text field cannot be empty"
-                          : null,
+                      errorText:
+                          _passwordError
+                              ? "This text field cannot be empty"
+                              : null,
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            const BorderSide(color: Colors.red, width: 2),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
@@ -275,9 +283,10 @@ class LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       "Login",
                       style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          fontFamily: 'Helvetica'),
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontFamily: 'Helvetica',
+                      ),
                     ),
                   ),
                 ),
@@ -298,7 +307,8 @@ class LoginScreenState extends State<LoginScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const RegisterScreen()),
+                      builder: (context) => const RegisterScreen(),
+                    ),
                   );
                 },
                 child: Text(

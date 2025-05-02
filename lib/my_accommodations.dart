@@ -58,14 +58,14 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
     );
 
     if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Accommodation deleted.")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Accommodation deleted.")));
       _loadMyAccommodations();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${response.body}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${response.body}")));
     }
   }
 
@@ -77,8 +77,9 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
       height: 100,
       fit: BoxFit.cover,
       headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
-      errorBuilder: (context, error, stackTrace) =>
-          const SizedBox(width: 100, height: 100, child: Placeholder()),
+      errorBuilder:
+          (context, error, stackTrace) =>
+              const SizedBox(width: 100, height: 100, child: Placeholder()),
     );
   }
 
@@ -87,18 +88,21 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
     final settings = context.watch<AppSettings>();
     final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
-    
-    final backgroundColor = highContrast
-        ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
 
-    final textColor = highContrast
-        ? (isDark ? Colors.white : Colors.black)
-        : (isDark ? Colors.white70 : Colors.black87);
+    final backgroundColor =
+        highContrast
+            ? (isDark ? Colors.black : Colors.white)
+            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
 
-    final cardColor = highContrast
-        ? (isDark ? Colors.grey[900] : Colors.white)
-        : (isDark ? Colors.grey[800] : Colors.grey[200]);
+    final textColor =
+        highContrast
+            ? (isDark ? Colors.white : Colors.black)
+            : (isDark ? Colors.white70 : Colors.black87);
+
+    final cardColor =
+        highContrast
+            ? (isDark ? Colors.grey[900] : Colors.white)
+            : (isDark ? Colors.grey[800] : Colors.grey[200]);
 
     final iconColor = textColor;
 
@@ -113,80 +117,89 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
       body: Column(
         children: [
           Expanded(
-            child: myAccommodations.isEmpty
-                ? Center(
-                    child: Text("No accommodations found.",
-                        style: TextStyle(color: textColor)))
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: myAccommodations.length,
-                    itemBuilder: (context, index) {
-                      final item = myAccommodations[index];
+            child:
+                myAccommodations.isEmpty
+                    ? Center(
+                      child: Text(
+                        "No accommodations found.",
+                        style: TextStyle(color: textColor),
+                      ),
+                    )
+                    : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: myAccommodations.length,
+                      itemBuilder: (context, index) {
+                        final item = myAccommodations[index];
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isDark ? Colors.black26 : Colors.black12,
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: _buildImage(item['aid']),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item['name'],
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isDark ? Colors.black26 : Colors.black12,
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: _buildImage(item['aid']),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item['name'],
                                       style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: textColor)),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "${item['city']}, ${item['country']}",
-                                    style: TextStyle(color: textColor),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "${item['city']}, ${item['country']}",
+                                      style: TextStyle(color: textColor),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.edit, color: iconColor),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => AddAccommodationScreen(
+                                                accommodation: item,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete, color: iconColor),
+                                    onPressed:
+                                        () => _deleteAccommodation(item['aid']),
                                   ),
                                 ],
                               ),
-                            ),
-                            Column(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit, color: iconColor),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => AddAccommodationScreen(
-                                            accommodation: item),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: iconColor),
-                                  onPressed: () =>
-                                      _deleteAccommodation(item['aid']),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
           ),
           Padding(
             padding: const EdgeInsets.all(16),
@@ -196,7 +209,8 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: () {
                 Navigator.push(
@@ -209,7 +223,9 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
               child: const Text(
                 "Add Accommodation",
                 style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

@@ -16,7 +16,8 @@ class AccommodationDetailScreen extends StatefulWidget {
   const AccommodationDetailScreen({super.key, required this.aid});
 
   @override
-  State<AccommodationDetailScreen> createState() => _AccommodationDetailScreenState();
+  State<AccommodationDetailScreen> createState() =>
+      _AccommodationDetailScreenState();
 }
 
 class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
@@ -54,8 +55,9 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
       'http://$serverIp:$serverPort/accommodations/${widget.aid}/image/$index',
       fit: BoxFit.cover,
       headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
-      errorBuilder: (context, error, stackTrace) =>
-          const Center(child: Icon(Icons.broken_image)),
+      errorBuilder:
+          (context, error, stackTrace) =>
+              const Center(child: Icon(Icons.broken_image)),
     );
   }
 
@@ -63,31 +65,48 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettings>();
     final highContrast = settings.highContrast;
+    final bigText = settings.bigText;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
-
-    final backgroundColor = highContrast
-        ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
-
-    final textColor = highContrast
-        ? (isDark ? Colors.white60 : Colors.black)
-        : (isDark ? Colors.grey[800]! : Colors.black87);
-
 
     if (data == null) {
       return Scaffold(
-        backgroundColor: backgroundColor,
+        backgroundColor:
+            highContrast
+                ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+                : (isDark ? AppColors.colorBgDark : AppColors.colorBg),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor:
+          highContrast
+              ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+              : (isDark ? AppColors.colorBgDark : AppColors.colorBg),
       appBar: AppBar(
-        backgroundColor: backgroundColor,
-        foregroundColor: textColor,
+        backgroundColor:
+            highContrast
+                ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+                : (isDark ? AppColors.colorBgDark : AppColors.colorBg),
+        foregroundColor:
+            highContrast
+                ? (isDark
+                    ? AppColors.colorTextDarkHigh
+                    : AppColors.colorTextHigh)
+                : (isDark ? AppColors.colorTextDark : AppColors.colorText),
         elevation: 0,
         title: Text(data!['name']),
+        titleTextStyle: TextStyle(
+          fontSize: bigText ? 24 : 20,
+          fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+          color:
+              highContrast
+                  ? (isDark
+                      ? AppColors.colorTextDarkHigh
+                      : AppColors.colorTextHigh)
+                  : (isDark ? AppColors.colorTextDark : AppColors.colorText),
+          fontFamily: 'Helvetica',
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -102,9 +121,10 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
                   children: [
                     Expanded(
                       flex: 2,
-                      child: imageIndices.isNotEmpty
-                          ? buildImage(imageIndices[0])
-                          : const Placeholder(),
+                      child:
+                          imageIndices.isNotEmpty
+                              ? buildImage(imageIndices[0])
+                              : const Placeholder(),
                     ),
                     const SizedBox(width: 2),
                     Expanded(
@@ -112,9 +132,10 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
                       child: Column(
                         children: [
                           Expanded(
-                            child: imageIndices.length > 1
-                                ? buildImage(imageIndices[1])
-                                : const Placeholder(),
+                            child:
+                                imageIndices.length > 1
+                                    ? buildImage(imageIndices[1])
+                                    : const Placeholder(),
                           ),
                           const SizedBox(height: 2),
                           Expanded(
@@ -124,29 +145,67 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
                                     ? buildImage(imageIndices[2])
                                     : const Placeholder(),
                                 Positioned(
-                                  bottom: 8,
-                                  left: 8,
+                                  bottom: 6,
+                                  right: 10,
                                   child: ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: highContrast ? Colors.white : Colors.grey[200],
-                                      foregroundColor: Colors.black,
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      backgroundColor:
+                                          highContrast
+                                              ? (isDark
+                                                  ? AppColors.colorBgDarkHigh
+                                                  : AppColors.colorBgHigh)
+                                              : (isDark
+                                                  ? AppColors.colorBgDark
+                                                  : AppColors.colorBg),
+                                      foregroundColor:
+                                          highContrast
+                                              ? (isDark
+                                                  ? AppColors.colorTextDarkHigh
+                                                  : AppColors.colorTextHigh)
+                                              : (isDark
+                                                  ? AppColors.colorTextDark
+                                                  : AppColors.colorText),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: bigText ? 12 : 8,
+                                        vertical: bigText ? 8 : 6,
+                                      ),
+                                      minimumSize: Size(
+                                        bigText ? 120 : 80,
+                                        bigText ? 40 : 30,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                     ),
-                                    icon: const Icon(Icons.photo_library),
-                                    label: const Text("Gallery"),
+                                    icon: Icon(
+                                      Icons.photo_library,
+                                      size: bigText ? 24 : 20,
+                                    ),
+                                    label: Text(
+                                      "Gallery",
+                                      style: TextStyle(
+                                        fontSize: bigText ? 16 : 14,
+                                        fontFamily: 'Helvetica',
+                                        fontWeight:
+                                            bigText
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                      ),
+                                    ),
                                     onPressed: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => GalleryScreen(aid: widget.aid, images: imageIndices),
+                                          builder:
+                                              (_) => GalleryScreen(
+                                                aid: widget.aid,
+                                                images: imageIndices,
+                                              ),
                                         ),
                                       );
                                     },
                                   ),
-                                )
+                                ),
                               ],
                             ),
                           ),
@@ -158,22 +217,106 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Text(data!['location'], style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+            Text(
+              data!['location'],
+              style: TextStyle(
+                fontSize: bigText ? 24 : 18,
+                fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                color:
+                    highContrast
+                        ? (isDark
+                            ? AppColors.colorTextDarkHigh
+                            : AppColors.colorTextHigh)
+                        : (isDark
+                            ? AppColors.colorTextDark
+                            : AppColors.colorText),
+                fontFamily: 'Helvetica',
+              ),
+            ),
             const SizedBox(height: 6),
-            Text('${data!['price_per_night']} € / night', style: TextStyle(color: textColor)),
+            Text(
+              '${data!['price_per_night']} € / night',
+              style: TextStyle(
+                fontSize: bigText ? 20 : 16,
+                fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                color:
+                    highContrast
+                        ? (isDark
+                            ? AppColors.colorTextDarkHigh
+                            : AppColors.colorTextHigh)
+                        : (isDark
+                            ? AppColors.colorTextDark
+                            : AppColors.colorText),
+                fontFamily: 'Helvetica',
+              ),
+            ),
             const SizedBox(height: 10),
-            Text('Max guests: ${data!['max_guests']}', style: TextStyle(color: textColor)),
+            Text(
+              'Max guests: ${data!['max_guests']}',
+              style: TextStyle(
+                fontSize: bigText ? 20 : 16,
+                fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                color:
+                    highContrast
+                        ? (isDark
+                            ? AppColors.colorTextDarkHigh
+                            : AppColors.colorTextHigh)
+                        : (isDark
+                            ? AppColors.colorTextDark
+                            : AppColors.colorText),
+                fontFamily: 'Helvetica',
+              ),
+            ),
             const SizedBox(height: 10),
             if (data!['description'] != null)
-              Text(data!['description'], textAlign: TextAlign.justify, style: TextStyle(color: textColor)),
+              Text(
+                data!['description'],
+                textAlign: TextAlign.justify,
+                style: TextStyle(
+                  fontSize: bigText ? 20 : 16,
+                  fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                  color:
+                      highContrast
+                          ? (isDark
+                              ? AppColors.colorTextDarkHigh
+                              : AppColors.colorTextHigh)
+                          : (isDark
+                              ? AppColors.colorTextDark
+                              : AppColors.colorText),
+                  fontFamily: 'Helvetica',
+                ),
+              ),
             const Divider(height: 30),
-            Text('Owner: ${data!['owner_email']}', style: TextStyle(color: textColor)),
+            Text(
+              'Owner: ${data!['owner_email']}',
+              style: TextStyle(
+                fontSize: bigText ? 20 : 16,
+                color:
+                    highContrast
+                        ? (isDark
+                            ? AppColors.colorTextDarkHigh
+                            : AppColors.colorTextHigh)
+                        : (isDark
+                            ? AppColors.colorTextDark
+                            : AppColors.colorText),
+                fontFamily: 'Helvetica',
+                fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                  backgroundColor:
+                      highContrast
+                          ? (isDark
+                              ? AppColors.color1DarkHigh
+                              : AppColors.color1High)
+                          : (isDark ? AppColors.color1Dark : AppColors.color1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 14,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -183,13 +326,22 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ReserveFormularScreen(accommodation: data!),
+                      builder:
+                          (_) => ReserveFormularScreen(accommodation: data!),
                     ),
                   );
                 },
-                child: const Text(
+                child: Text(
                   "Make a Reservation",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: bigText ? 20 : 16,
+                    color:
+                        highContrast
+                            ? AppColors.colorTextDarkHigh
+                            : AppColors.colorTextDark,
+                    fontFamily: 'Helvetica',
+                    fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ),
             ),

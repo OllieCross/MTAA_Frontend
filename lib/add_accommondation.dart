@@ -66,17 +66,20 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     setState(() => isUploading = true);
 
     final uri = Uri.parse('http://$serverIp:$serverPort/add-accommodation');
-    final request = http.MultipartRequest('POST', uri)
-      ..headers['Authorization'] = 'Bearer $token'
-      ..fields['name'] = nameController.text
-      ..fields['address'] = addressController.text
-      ..fields['guests'] = guestsController.text
-      ..fields['price'] = priceController.text
-      ..fields['iban'] = ibanController.text
-      ..fields['description'] = descriptionController.text;
+    final request =
+        http.MultipartRequest('POST', uri)
+          ..headers['Authorization'] = 'Bearer $token'
+          ..fields['name'] = nameController.text
+          ..fields['address'] = addressController.text
+          ..fields['guests'] = guestsController.text
+          ..fields['price'] = priceController.text
+          ..fields['iban'] = ibanController.text
+          ..fields['description'] = descriptionController.text;
 
     for (var image in selectedImages) {
-      request.files.add(await http.MultipartFile.fromPath('images', image.path));
+      request.files.add(
+        await http.MultipartFile.fromPath('images', image.path),
+      );
     }
 
     final response = await request.send();
@@ -89,9 +92,9 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
       Navigator.pop(context);
     } else {
       final respStr = await response.stream.bytesToString();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $respStr")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: $respStr")));
     }
   }
 
@@ -112,19 +115,20 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    final backgroundColor = highContrast
-        ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+    final backgroundColor =
+        highContrast
+            ? (isDark ? Colors.black : Colors.white)
+            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
 
-    final textColor = highContrast
-        ? (isDark ? Colors.white : Colors.black)
-        : (isDark ? Colors.white70 : Colors.black87);
+    final textColor =
+        highContrast
+            ? (isDark ? Colors.white : Colors.black)
+            : (isDark ? Colors.white70 : Colors.black87);
 
-    final Color fillColor = isDark
-    ? (Colors.grey[800] ?? Colors.grey)
-    : (Colors.grey[100] ?? Colors.grey);
-
-
+    final Color fillColor =
+        isDark
+            ? (Colors.grey[800] ?? Colors.grey)
+            : (Colors.grey[100] ?? Colors.grey);
 
     final isEdit = widget.accommodation != null;
 
@@ -140,12 +144,45 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildField(label: "Name", controller: nameController, fillColor: fillColor, textColor: textColor),
-            _buildField(label: "Address", controller: addressController, fillColor: fillColor, textColor: textColor),
-            _buildField(label: "Nr. of Guests", controller: guestsController, keyboardType: TextInputType.number, fillColor: fillColor, textColor: textColor),
-            _buildField(label: "Price per Night", controller: priceController, keyboardType: TextInputType.number, fillColor: fillColor, textColor: textColor),
-            _buildField(label: "IBAN", controller: ibanController, fillColor: fillColor, textColor: textColor),
-            _buildField(label: "Description", controller: descriptionController, maxLines: 4, fillColor: fillColor, textColor: textColor),
+            _buildField(
+              label: "Name",
+              controller: nameController,
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
+            _buildField(
+              label: "Address",
+              controller: addressController,
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
+            _buildField(
+              label: "Nr. of Guests",
+              controller: guestsController,
+              keyboardType: TextInputType.number,
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
+            _buildField(
+              label: "Price per Night",
+              controller: priceController,
+              keyboardType: TextInputType.number,
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
+            _buildField(
+              label: "IBAN",
+              controller: ibanController,
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
+            _buildField(
+              label: "Description",
+              controller: descriptionController,
+              maxLines: 4,
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
             const SizedBox(height: 16),
             _buildImagePicker(fillColor, textColor),
             const SizedBox(height: 20),
@@ -153,14 +190,18 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
               onPressed: isUploading ? null : _submitAccommodation,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 14,
+                ),
               ),
-              child: isUploading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                      isEdit ? "Save Changes" : "Add Accommodation",
-                      style: const TextStyle(color: Colors.white),
-                    ),
+              child:
+                  isUploading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                        isEdit ? "Save Changes" : "Add Accommodation",
+                        style: const TextStyle(color: Colors.white),
+                      ),
             ),
           ],
         ),
@@ -188,7 +229,10 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
           labelStyle: TextStyle(color: textColor.withOpacity(0.8)),
           filled: true,
           fillColor: fillColor,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
     );
@@ -198,7 +242,10 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Photos (${selectedImages.length})", style: TextStyle(fontWeight: FontWeight.w500, color: textColor)),
+        Text(
+          "Photos (${selectedImages.length})",
+          style: TextStyle(fontWeight: FontWeight.w500, color: textColor),
+        ),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: _pickImages,
@@ -217,29 +264,39 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: selectedImages.map((image) {
-              return Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(File(image.path), width: 80, height: 80, fit: BoxFit.cover),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedImages.remove(image);
-                      });
-                    },
-                    child: const CircleAvatar(
-                      radius: 10,
-                      backgroundColor: Colors.black54,
-                      child: Icon(Icons.close, size: 14, color: Colors.white),
-                    ),
-                  )
-                ],
-              );
-            }).toList(),
+            children:
+                selectedImages.map((image) {
+                  return Stack(
+                    alignment: Alignment.topRight,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(image.path),
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedImages.remove(image);
+                          });
+                        },
+                        child: const CircleAvatar(
+                          radius: 10,
+                          backgroundColor: Colors.black54,
+                          child: Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
           ),
       ],
     );

@@ -69,8 +69,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       height: 200,
       fit: BoxFit.cover,
       headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
-      errorBuilder: (context, error, stackTrace) =>
-          const SizedBox(height: 200, child: Placeholder()),
+      errorBuilder:
+          (context, error, stackTrace) =>
+              const SizedBox(height: 200, child: Placeholder()),
     );
   }
 
@@ -80,17 +81,20 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    final backgroundColor = highContrast
-        ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+    final backgroundColor =
+        highContrast
+            ? (isDark ? Colors.black : Colors.white)
+            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
 
-    final textColor = highContrast
-        ? (isDark ? Colors.white : Colors.black)
-        : (isDark ? Colors.white70 : Colors.black87);
+    final textColor =
+        highContrast
+            ? (isDark ? Colors.white : Colors.black)
+            : (isDark ? Colors.white70 : Colors.black87);
 
-    final cardColor = highContrast
-        ? (isDark ? Colors.grey[900] : Colors.white)
-        : (isDark ? Colors.grey[800] : Colors.grey[200]);
+    final cardColor =
+        highContrast
+            ? (isDark ? Colors.grey[900] : Colors.white)
+            : (isDark ? Colors.grey[800] : Colors.grey[200]);
 
     final dateRange =
         '${widget.dateFrom.day}.${widget.dateFrom.month}. - ${widget.dateTo.day}.${widget.dateTo.month}.';
@@ -117,58 +121,88 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               ),
               child: Column(
                 children: [
-                  Text(header, style: TextStyle(fontSize: 16, color: textColor)),
+                  Text(
+                    header,
+                    style: TextStyle(fontSize: 16, color: textColor),
+                  ),
                   const SizedBox(height: 4),
-                  Text(dateRange, style: TextStyle(color: textColor.withOpacity(0.7))),
+                  Text(
+                    dateRange,
+                    style: TextStyle(color: textColor.withOpacity(0.7)),
+                  ),
                 ],
               ),
             ),
           ),
           Expanded(
-            child: results.isEmpty
-                ? Center(child: Text('No results found', style: TextStyle(color: textColor)))
-                : ListView.builder(
-                    itemCount: results.length,
-                    padding: const EdgeInsets.all(12),
-                    itemBuilder: (context, index) {
-                      final item = results[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  AccommodationDetailScreen(aid: item['aid']),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          color: cardColor,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                                child: _buildImage(item['aid']),
+            child:
+                results.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No results found',
+                        style: TextStyle(color: textColor),
+                      ),
+                    )
+                    : ListView.builder(
+                      itemCount: results.length,
+                      padding: const EdgeInsets.all(12),
+                      itemBuilder: (context, index) {
+                        final item = results[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (_) => AccommodationDetailScreen(
+                                      aid: item['aid'],
+                                    ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(item['location'], style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textColor)),
-                                    const SizedBox(height: 4),
-                                    Text('${item['price_per_night']} € / Night', style: TextStyle(fontSize: 14, color: textColor)),
-                                  ],
+                            );
+                          },
+                          child: Card(
+                            color: cardColor,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(10),
+                                  ),
+                                  child: _buildImage(item['aid']),
                                 ),
-                              ),
-                            ],
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item['location'],
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: textColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${item['price_per_night']} € / Night',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: textColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
           ),
         ],
       ),

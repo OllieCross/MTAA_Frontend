@@ -22,8 +22,7 @@ class MainScreenAccommodations extends StatefulWidget {
       _MainScreenAccommodationsState();
 }
 
-class _MainScreenAccommodationsState
-    extends State<MainScreenAccommodations> {
+class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
   final TextEditingController locationController = TextEditingController();
   final TextEditingController guestController = TextEditingController();
   final ValueNotifier<DateTime?> dateFromNotifier = ValueNotifier(null);
@@ -52,12 +51,10 @@ class _MainScreenAccommodationsState
       final baseList = data['results'];
       if (!mounted) return;
       setState(() {
-        accommodations = baseList
-            .map((item) => {
-                  ...item,
-                  'is_liked': item['is_liked'] ?? false,
-                })
-            .toList();
+        accommodations =
+            baseList
+                .map((item) => {...item, 'is_liked': item['is_liked'] ?? false})
+                .toList();
       });
     }
   }
@@ -65,9 +62,7 @@ class _MainScreenAccommodationsState
   Future<Uint8List?> fetchAccommodationImage(int aid) async {
     final response = await http.get(
       Uri.parse('http://$serverIp:$serverPort/accommodations/$aid/image/1'),
-      headers: {
-        if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
-      },
+      headers: {if (jwtToken != null) 'Authorization': 'Bearer $jwtToken'},
     );
     if (response.statusCode == 200) {
       return response.bodyBytes;
@@ -89,8 +84,7 @@ class _MainScreenAccommodationsState
       final message = jsonDecode(response.body)['message'];
       if (!mounted) return;
       setState(() {
-        accommodations[index]['is_liked'] =
-            message == 'Liked accommodation';
+        accommodations[index]['is_liked'] = message == 'Liked accommodation';
       });
     }
   }
@@ -105,34 +99,37 @@ class _MainScreenAccommodationsState
     if (Platform.isIOS) {
       showCupertinoModalPopup(
         context: context,
-        builder: (_) => Container(
-          height: 260,
-          color: CupertinoColors.systemBackground.resolveFrom(context),
-          child: Column(
-            children: [
-              // Done button
-              Container(
-                alignment: Alignment.centerRight,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  child: const Text('Done'),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+        builder:
+            (_) => Container(
+              height: 260,
+              color: CupertinoColors.systemBackground.resolveFrom(context),
+              child: Column(
+                children: [
+                  // Done button
+                  Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: const Text('Done'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                  Expanded(
+                    child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.date,
+                      initialDateTime: initialDate,
+                      minimumDate: firstDate,
+                      maximumDate: lastDate,
+                      onDateTimeChanged: onDateSelected,
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: CupertinoDatePicker(
-                  mode: CupertinoDatePickerMode.date,
-                  initialDateTime: initialDate,
-                  minimumDate: firstDate,
-                  maximumDate: lastDate,
-                  onDateTimeChanged: onDateSelected,
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
       );
     } else {
       showDatePicker(
@@ -150,16 +147,12 @@ class _MainScreenAccommodationsState
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettings>();
     final highContrast = settings.highContrast;
-    final textScale = settings.textScale;
-    final isDark =
-        MediaQuery.of(context).platformBrightness == Brightness.dark;
-    final backgroundColor = highContrast
-        ? (isDark
-            ? AppColors.colorBgDarkHigh
-            : AppColors.colorBgHigh)
-        : (isDark
-            ? AppColors.colorBgDark
-            : AppColors.colorBg);
+    final bigText = settings.bigText;
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final backgroundColor =
+        highContrast
+            ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+            : (isDark ? AppColors.colorBgDark : AppColors.colorBg);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -178,27 +171,34 @@ class _MainScreenAccommodationsState
                       child: TextField(
                         controller: locationController,
                         style: TextStyle(
-                            color:
-                                Theme.of(context).textTheme.bodyMedium!.color),
+                          color: Theme.of(context).textTheme.bodyMedium!.color,
+                        ),
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.location_on_outlined,
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium!
-                                  .color),
+                          prefixIcon: Icon(
+                            Icons.location_on_outlined,
+                            color:
+                                Theme.of(context).textTheme.bodyMedium!.color,
+                          ),
                           hintText: 'Location',
-                          hintStyle: TextStyle(fontSize: textScale ? 24 : 18,
-                          color: highContrast ? (isDark
-                            ? AppColors.colorTextDarkHigh
-                            : AppColors.colorTextHigh) 
-                            :( isDark
-                            ? AppColors.colorTextDark
-                            : AppColors.colorText),
-                          fontFamily: 'Helvetica',
-                          fontWeight: textScale ? FontWeight.bold : FontWeight.normal),
+                          hintStyle: TextStyle(
+                            fontSize: bigText ? 24 : 18,
+                            color:
+                                highContrast
+                                    ? (isDark
+                                        ? AppColors.colorTextDarkHigh
+                                        : AppColors.colorTextHigh)
+                                    : (isDark
+                                        ? AppColors.colorTextDark
+                                        : AppColors.colorText),
+                            fontFamily: 'Helvetica',
+                            fontWeight:
+                                bigText ? FontWeight.bold : FontWeight.normal,
+                          ),
                           filled: true,
                           fillColor:
-                              isDark ? Colors.grey[800] : const Color.fromARGB(255, 199, 199, 199),
+                              isDark
+                                  ? Colors.grey[800]
+                                  : const Color.fromARGB(255, 199, 199, 199),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
@@ -208,9 +208,10 @@ class _MainScreenAccommodationsState
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: Icon(Icons.my_location,
-                          color:
-                              Theme.of(context).textTheme.bodyMedium!.color),
+                      icon: Icon(
+                        Icons.my_location,
+                        color: Theme.of(context).textTheme.bodyMedium!.color,
+                      ),
                       tooltip: 'Use my location',
                       onPressed: () async {
                         LocationPermission permission =
@@ -220,8 +221,10 @@ class _MainScreenAccommodationsState
                           if (permission == LocationPermission.denied) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text(
-                                      'Location permission was denied.')),
+                                content: Text(
+                                  'Location permission was denied.',
+                                ),
+                              ),
                             );
                             return;
                           }
@@ -229,8 +232,10 @@ class _MainScreenAccommodationsState
                         if (permission == LocationPermission.deniedForever) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text(
-                                    'Location permission is permanently denied. Please enable it in settings.')),
+                              content: Text(
+                                'Location permission is permanently denied. Please enable it in settings.',
+                              ),
+                            ),
                           );
                           return;
                         }
@@ -240,8 +245,7 @@ class _MainScreenAccommodationsState
                           ),
                         );
                         final response = await http.post(
-                          Uri.parse(
-                              'http://$serverIp:$serverPort/get-address'),
+                          Uri.parse('http://$serverIp:$serverPort/get-address'),
                           headers: {
                             'Content-Type': 'application/json',
                             if (jwtToken != null)
@@ -259,7 +263,7 @@ class _MainScreenAccommodationsState
                           });
                         }
                       },
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -292,8 +296,10 @@ class _MainScreenAccommodationsState
                       to == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text(
-                              'Please fill in location, dates, and guest count.')),
+                        content: Text(
+                          'Please fill in location, dates, and guest count.',
+                        ),
+                      ),
                     );
                     return;
                   }
@@ -301,8 +307,8 @@ class _MainScreenAccommodationsState
                   if (to.isBefore(from)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text(
-                              'End date cant be before start date.')),
+                        content: Text('End date cant be before start date.'),
+                      ),
                     );
                     return;
                   }
@@ -310,45 +316,50 @@ class _MainScreenAccommodationsState
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => SearchResultsScreen(
-                        location: loc,
-                        dateFrom: from,
-                        dateTo: to,
-                        guests: int.parse(guestsText),
-                      ),
+                      builder:
+                          (context) => SearchResultsScreen(
+                            location: loc,
+                            dateFrom: from,
+                            dateTo: to,
+                            guests: int.parse(guestsText),
+                          ),
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: highContrast
-                  ? (isDark
-                      ? AppColors.color1DarkHigh
-                      : AppColors.color1High)
-                  : (isDark
-                      ? AppColors.color1Dark
-                      : AppColors.color1),
+                  backgroundColor:
+                      highContrast
+                          ? (isDark
+                              ? AppColors.color1DarkHigh
+                              : AppColors.color1High)
+                          : (isDark ? AppColors.color1Dark : AppColors.color1),
                   minimumSize: const Size(double.infinity, 50),
                 ),
-                child: Text("Search",
-                    style:
-                        TextStyle(fontSize: textScale ? 24 : 18,
-                          color: highContrast ? AppColors.colorTextDarkHigh : AppColors.colorTextDark,
-                          fontFamily: 'Helvetica',
-                          fontWeight: textScale ? FontWeight.bold : FontWeight.normal)
-                          ),
+                child: Text(
+                  "Search",
+                  style: TextStyle(
+                    fontSize: bigText ? 24 : 18,
+                    fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                    color:
+                        highContrast
+                            ? AppColors.colorTextDarkHigh
+                            : AppColors.colorTextDark,
+                    fontFamily: 'Helvetica',
+                  ),
+                ),
               ),
 
               const SizedBox(height: 20),
 
               // Recommendations list
               if (accommodations.isEmpty)
-                Text("No accommodations available.",
-                    style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(context)
-                            .textTheme
-                            .bodyMedium!
-                            .color))
+                Text(
+                  "No accommodations available.",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyMedium!.color,
+                  ),
+                )
               else
                 ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),
@@ -359,27 +370,28 @@ class _MainScreenAccommodationsState
                     final isLiked = item['is_liked'] ?? false;
 
                     return FutureBuilder<Uint8List?>(
-                      future:
-                          fetchAccommodationImage(item['aid']),
+                      future: fetchAccommodationImage(item['aid']),
                       builder: (context, snapshot) {
                         Widget imageWidget;
-                        if (snapshot.connectionState ==
-                                ConnectionState.done &&
+                        if (snapshot.connectionState == ConnectionState.done &&
                             snapshot.hasData) {
-                          imageWidget = Image.memory(snapshot.data!,
-                              fit: BoxFit.cover,
-                              height: 180,
-                              width: double.infinity);
+                          imageWidget = Image.memory(
+                            snapshot.data!,
+                            fit: BoxFit.cover,
+                            height: 180,
+                            width: double.infinity,
+                          );
                         } else if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           imageWidget = const SizedBox(
-                              height: 180,
-                              child: Center(
-                                  child:
-                                      CircularProgressIndicator()));
+                            height: 180,
+                            child: Center(child: CircularProgressIndicator()),
+                          );
                         } else {
                           imageWidget = const SizedBox(
-                              height: 180, child: Placeholder());
+                            height: 180,
+                            child: Placeholder(),
+                          );
                         }
 
                         return GestureDetector(
@@ -387,66 +399,78 @@ class _MainScreenAccommodationsState
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    AccommodationDetailScreen(
-                                        aid: item['aid']),
+                                builder:
+                                    (_) => AccommodationDetailScreen(
+                                      aid: item['aid'],
+                                    ),
                               ),
                             );
                           },
                           child: Card(
-                            margin:
-                                const EdgeInsets.only(bottom: 16),
+                            margin: const EdgeInsets.only(bottom: 16),
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 ClipRRect(
-                                  borderRadius:
-                                      const BorderRadius.vertical(
-                                          top:
-                                              Radius.circular(10)),
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(10),
+                                  ),
                                   child: imageWidget,
                                 ),
                                 Padding(
-                                  padding:
-                                      const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(12),
                                   child: Row(
                                     mainAxisAlignment:
-                                        MainAxisAlignment
-                                            .spaceBetween,
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Column(
                                         crossAxisAlignment:
-                                            CrossAxisAlignment
-                                                .start,
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             item['location'],
-                                            style: TextStyle(fontSize: textScale ? 24 : 18,
-                                            color: highContrast ? 
-                                              (isDark ? 
-                                              AppColors.colorTextDarkHigh 
-                                              : AppColors.colorTextHigh) : ( 
-                                              isDark ? 
-                                              AppColors.colorTextDark : 
-                                              AppColors.colorText),
-                                            fontFamily: 'Helvetica',
-                                            fontWeight: textScale ? FontWeight.bold : FontWeight.normal),
+                                            style: TextStyle(
+                                              fontSize: bigText ? 24 : 18,
+                                              fontWeight: bigText
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                              color:
+                                                  highContrast
+                                                      ? (isDark
+                                                          ? AppColors
+                                                              .colorTextDarkHigh
+                                                          : AppColors
+                                                              .colorTextHigh)
+                                                      : (isDark
+                                                          ? AppColors
+                                                              .colorTextDark
+                                                          : AppColors
+                                                              .colorText),
+                                              fontFamily: 'Helvetica',
+                                            ),
                                           ),
-                                          const SizedBox(
-                                              height: 4),
+                                          const SizedBox(height: 4),
                                           Text(
                                             '${item['price_per_night']} € / Night',
-                                            style: TextStyle(fontSize: textScale ? 18 : 14,
-                                            color: highContrast ? 
-                                              (isDark ? 
-                                              AppColors.colorTextDarkHigh 
-                                              : AppColors.colorTextHigh) : ( 
-                                              isDark ? 
-                                              AppColors.colorTextDark : 
-                                              AppColors.colorText),
-                                            fontFamily: 'Helvetica',
-                                            fontWeight: textScale ? FontWeight.bold : FontWeight.normal),
+                                            style: TextStyle(
+                                              fontSize: bigText ? 20 : 16,
+                                              fontWeight: bigText
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                              color:
+                                                  highContrast
+                                                      ? (isDark
+                                                          ? AppColors
+                                                              .colorTextDarkHigh
+                                                          : AppColors
+                                                              .colorTextHigh)
+                                                      : (isDark
+                                                          ? AppColors
+                                                              .colorTextDark
+                                                          : AppColors
+                                                              .colorText),
+                                              fontFamily: 'Helvetica',
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -454,19 +478,17 @@ class _MainScreenAccommodationsState
                                         icon: Icon(
                                           isLiked
                                               ? Icons.favorite
-                                              : Icons
-                                                  .favorite_border,
-                                          color: isLiked
-                                              ? Colors.red
-                                              : (isDark
-                                                  ? Colors.white
-                                                  : Colors
-                                                      .black),
+                                              : Icons.favorite_border,
+                                          color:
+                                              isLiked
+                                                  ? Colors.red
+                                                  : (isDark
+                                                      ? Colors.white
+                                                      : Colors.black),
                                         ),
-                                        onPressed: () =>
-                                            toggleLike(
-                                                item['aid'],
-                                                index),
+                                        onPressed:
+                                            () =>
+                                                toggleLike(item['aid'], index),
                                       ),
                                     ],
                                   ),
@@ -498,19 +520,22 @@ class _MainScreenAccommodationsState
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium!.color),
+        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
         decoration: InputDecoration(
-          prefixIcon:
-              Icon(icon, color: Theme.of(context).textTheme.bodyMedium!.color),
+          prefixIcon: Icon(
+            icon,
+            color: Theme.of(context).textTheme.bodyMedium!.color,
+          ),
           hintText: hint,
           hintStyle: TextStyle(
-              color: Theme.of(context).textTheme.bodyMedium!.color),
+            color: Theme.of(context).textTheme.bodyMedium!.color,
+          ),
           filled: true,
           fillColor: isDark ? Colors.grey[800] : Colors.grey[300],
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
     );
@@ -527,9 +552,10 @@ class _MainScreenAccommodationsState
                 valueListenable: dateFromNotifier,
                 builder: (context, dateFrom, _) {
                   return _buildDateTile(
-                    label: dateFrom == null
-                    ? 'from'
-                    : DateFormat.yMMMMd().format(dateFrom),
+                    label:
+                        dateFrom == null
+                            ? 'from'
+                            : DateFormat.yMMMMd().format(dateFrom),
                     isDark: isDark,
                     context: context,
                     onTap: () {
@@ -539,8 +565,8 @@ class _MainScreenAccommodationsState
                         initialDate: dateFrom ?? now,
                         firstDate: now.subtract(const Duration(days: 1)),
                         lastDate: now.add(const Duration(days: 365)),
-                        onDateSelected: (picked) =>
-                            dateFromNotifier.value = picked,
+                        onDateSelected:
+                            (picked) => dateFromNotifier.value = picked,
                       );
                     },
                   );
@@ -556,17 +582,18 @@ class _MainScreenAccommodationsState
                 valueListenable: dateToNotifier,
                 builder: (context, dateTo, _) {
                   return _buildDateTile(
-                    label: dateTo == null
-                        ? 'to'
-                        : DateFormat.yMMMMd().format(dateTo),
+                    label:
+                        dateTo == null
+                            ? 'to'
+                            : DateFormat.yMMMMd().format(dateTo),
                     isDark: isDark,
                     context: context,
                     onTap: () {
                       if (dateFromNotifier.value == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text(
-                                  'Please pick a start date first.')),
+                            content: Text('Please pick a start date first.'),
+                          ),
                         );
                         return;
                       }
@@ -578,8 +605,8 @@ class _MainScreenAccommodationsState
                         initialDate: initial,
                         firstDate: min,
                         lastDate: now.add(const Duration(days: 365)),
-                        onDateSelected: (picked) =>
-                            dateToNotifier.value = picked,
+                        onDateSelected:
+                            (picked) => dateToNotifier.value = picked,
                       );
                     },
                   );
@@ -611,7 +638,8 @@ class _MainScreenAccommodationsState
         child: Text(
           label,
           style: TextStyle(
-              color: Theme.of(context).textTheme.bodyMedium!.color),
+            color: Theme.of(context).textTheme.bodyMedium!.color,
+          ),
         ),
       ),
     );

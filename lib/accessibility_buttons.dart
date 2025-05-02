@@ -20,7 +20,7 @@ class AccessibilityButtons extends StatelessWidget {
               const Icon(CupertinoIcons.textformat_size, size: 24),
               const SizedBox(height: 8),
               CupertinoSwitch(
-                value: settings.textScale,
+                value: settings.bigText,
                 onChanged: (_) => settings.toggleText(),
               ),
             ],

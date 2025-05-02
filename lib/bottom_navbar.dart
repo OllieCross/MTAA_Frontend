@@ -44,17 +44,20 @@ class BottomNavBar extends StatelessWidget {
     final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    final backgroundColor = highContrast
-        ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+    final backgroundColor =
+        highContrast
+            ? (isDark ? Colors.black : Colors.white)
+            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
 
-    final selectedColor = highContrast
-        ? (isDark ? Colors.white : Colors.black)
-        : (isDark ? Colors.white : Colors.black);
+    final selectedColor =
+        highContrast
+            ? (isDark ? Colors.white : Colors.black)
+            : (isDark ? Colors.white : Colors.black);
 
-    final unselectedColor = highContrast
-        ? (isDark ? Colors.grey[500]! : Colors.grey[700]!)
-        : (isDark ? Colors.white70 : Colors.grey);
+    final unselectedColor =
+        highContrast
+            ? (isDark ? Colors.grey[500]! : Colors.grey[700]!)
+            : (isDark ? Colors.white70 : Colors.grey);
 
     return BottomNavigationBar(
       currentIndex: currentIndex,

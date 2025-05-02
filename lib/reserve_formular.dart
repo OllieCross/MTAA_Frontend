@@ -26,13 +26,15 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
     final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    final backgroundColor = highContrast
-        ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+    final backgroundColor =
+        highContrast
+            ? (isDark ? Colors.black : Colors.white)
+            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
 
-    final textColor = highContrast
-        ? (isDark ? Colors.white : Colors.black)
-        : (isDark ? Colors.white60 : Colors.black87);
+    final textColor =
+        highContrast
+            ? (isDark ? Colors.white : Colors.black)
+            : (isDark ? Colors.white60 : Colors.black87);
 
     final fillColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
 
@@ -46,8 +48,9 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
       height: 100,
       fit: BoxFit.cover,
       headers: token != null ? {'Authorization': 'Bearer $token'} : {},
-      errorBuilder: (context, error, stackTrace) =>
-          const Placeholder(fallbackWidth: 100, fallbackHeight: 100),
+      errorBuilder:
+          (context, error, stackTrace) =>
+              const Placeholder(fallbackWidth: 100, fallbackHeight: 100),
     );
 
     return Scaffold(
@@ -75,61 +78,139 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.accommodation['name'],
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: textColor)),
+                      Text(
+                        widget.accommodation['name'],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Text(widget.accommodation['location'] ?? '',
-                          style: TextStyle(color: textColor)),
+                      Text(
+                        widget.accommodation['location'] ?? '',
+                        style: TextStyle(color: textColor),
+                      ),
                       const SizedBox(height: 4),
-                      Text("${widget.accommodation['max_guests']} Guests",
-                          style: TextStyle(color: textColor)),
+                      Text(
+                        "${widget.accommodation['max_guests']} Guests",
+                        style: TextStyle(color: textColor),
+                      ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
             const SizedBox(height: 24),
             Row(
               children: [
-                Expanded(child: _buildDatePicker("From", fromDate, (picked) => setState(() => fromDate = picked), fillColor, textColor)),
+                Expanded(
+                  child: _buildDatePicker(
+                    "From",
+                    fromDate,
+                    (picked) => setState(() => fromDate = picked),
+                    fillColor,
+                    textColor,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildDatePicker("To", toDate, (picked) => setState(() => toDate = picked), fillColor, textColor)),
+                Expanded(
+                  child: _buildDatePicker(
+                    "To",
+                    toDate,
+                    (picked) => setState(() => toDate = picked),
+                    fillColor,
+                    textColor,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
-            _buildTextField(label: 'Name', fillColor: fillColor, textColor: textColor),
-            _buildTextField(label: 'Surname', fillColor: fillColor, textColor: textColor),
+            _buildTextField(
+              label: 'Name',
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
+            _buildTextField(
+              label: 'Surname',
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
             Row(
               children: [
-                Expanded(child: _buildTextField(label: 'Street', fillColor: fillColor, textColor: textColor)),
+                Expanded(
+                  child: _buildTextField(
+                    label: 'Street',
+                    fillColor: fillColor,
+                    textColor: textColor,
+                  ),
+                ),
                 const SizedBox(width: 10),
-                SizedBox(width: 80, child: _buildTextField(label: 'Nr.', fillColor: fillColor, textColor: textColor)),
+                SizedBox(
+                  width: 80,
+                  child: _buildTextField(
+                    label: 'Nr.',
+                    fillColor: fillColor,
+                    textColor: textColor,
+                  ),
+                ),
               ],
             ),
             Row(
               children: [
-                Expanded(child: _buildTextField(label: 'City', fillColor: fillColor, textColor: textColor)),
+                Expanded(
+                  child: _buildTextField(
+                    label: 'City',
+                    fillColor: fillColor,
+                    textColor: textColor,
+                  ),
+                ),
                 const SizedBox(width: 10),
-                SizedBox(width: 100, child: _buildTextField(label: 'Zip Code', fillColor: fillColor, textColor: textColor)),
+                SizedBox(
+                  width: 100,
+                  child: _buildTextField(
+                    label: 'Zip Code',
+                    fillColor: fillColor,
+                    textColor: textColor,
+                  ),
+                ),
               ],
             ),
-            _buildTextField(label: 'Phone number', keyboardType: TextInputType.phone, fillColor: fillColor, textColor: textColor),
-            _buildTextField(label: 'Email address', keyboardType: TextInputType.emailAddress, fillColor: fillColor, textColor: textColor),
+            _buildTextField(
+              label: 'Phone number',
+              keyboardType: TextInputType.phone,
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
+            _buildTextField(
+              label: 'Email address',
+              keyboardType: TextInputType.emailAddress,
+              fillColor: fillColor,
+              textColor: textColor,
+            ),
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   elevation: 5,
                 ),
                 onPressed: () => _confirmReservation(context),
-                child: const Text("Confirm Reservation", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  "Confirm Reservation",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -161,7 +242,13 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
     );
   }
 
-  Widget _buildDatePicker(String label, DateTime? selectedDate, Function(DateTime) onPicked, Color fillColor, Color textColor) {
+  Widget _buildDatePicker(
+    String label,
+    DateTime? selectedDate,
+    Function(DateTime) onPicked,
+    Color fillColor,
+    Color textColor,
+  ) {
     return GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(
@@ -223,12 +310,14 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
       } else {
         final decoded = jsonDecode(response.body);
         final message = decoded['message'] ?? 'Reservation failed';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Network error: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Network error: $e")));
     }
   }
 }

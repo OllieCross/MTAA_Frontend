@@ -19,10 +19,10 @@ class AppColors {
 }
 
 class AppSettings extends ChangeNotifier {
-  bool _textScale = false;
+  bool _bigText = false;
   bool _highContrast = false;
 
-  bool get textScale => _textScale;
+  bool get bigText => _bigText;
   bool get highContrast => _highContrast;
 
   void toggleContrast() {
@@ -31,7 +31,7 @@ class AppSettings extends ChangeNotifier {
   }
 
   void toggleText() {
-    _textScale = !_textScale;
+    _bigText = !_bigText;
     notifyListeners();
   }
 }

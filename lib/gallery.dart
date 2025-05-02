@@ -17,9 +17,10 @@ class GalleryScreen extends StatelessWidget {
     final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    final backgroundColor = highContrast
-        ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+    final backgroundColor =
+        highContrast
+            ? (isDark ? Colors.black : Colors.white)
+            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
 
     final String? jwtToken = globalToken;
 
@@ -46,11 +47,9 @@ class GalleryScreen extends StatelessWidget {
           return Image.network(
             imageUrl,
             fit: BoxFit.cover,
-            headers: jwtToken != null
-                ? {'Authorization': 'Bearer $jwtToken'}
-                : {},
-            errorBuilder: (context, error, stackTrace) =>
-                const Placeholder(),
+            headers:
+                jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
+            errorBuilder: (context, error, stackTrace) => const Placeholder(),
           );
         },
       ),

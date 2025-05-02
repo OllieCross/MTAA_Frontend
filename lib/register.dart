@@ -13,7 +13,8 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _repeatPasswordController = TextEditingController();
+  final TextEditingController _repeatPasswordController =
+      TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscurePassword2 = true;
@@ -22,7 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _emailErrorMessage;
   String? _passwordErrorMessage;
   String? _repeatPasswordErrorMessage;
-  
+
   Future<void> _onRegisterPressed() async {
     // Reset errors first
     if (!mounted) return;
@@ -48,7 +49,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       hasError = true;
     }
     if (repeatPassword.isEmpty) {
-      setState(() => _repeatPasswordErrorMessage = 'Please re-enter the password');
+      setState(
+        () => _repeatPasswordErrorMessage = 'Please re-enter the password',
+      );
       hasError = true;
     }
 
@@ -89,16 +92,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
       }
     }
-
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final isDarkMode =
+        MediaQuery.of(context).platformBrightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
+      backgroundColor:
+          isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
       appBar: AppBar(
-        backgroundColor: isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
+        backgroundColor:
+            isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
       ),
       body: Center(
         // Center the content both vertically and horizontally
@@ -110,7 +115,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start, // left-align text
               children: [
-                
                 // TITLE
                 Center(
                   child: Text(
@@ -221,7 +225,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: const Text(
                         'Register',
                         style: TextStyle(
-                          color: Colors.white, fontFamily: 'Helvetica', fontSize: 18,
+                          color: Colors.white,
+                          fontFamily: 'Helvetica',
+                          fontSize: 18,
                         ),
                       ),
                     ),
@@ -266,17 +272,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return InputDecoration(
       filled: true,
       hintText: hintText,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       suffixIcon: suffixIcon,
       // If there's an error, show red border
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: hasError
-            ? const BorderSide(color: Colors.red, width: 2)
-            : BorderSide.none,
+        borderSide:
+            hasError
+                ? const BorderSide(color: Colors.red, width: 2)
+                : BorderSide.none,
       ),
     );
   }
@@ -286,8 +290,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: Text(
-        msg, 
-        style: const TextStyle(color: Colors.red, fontFamily: 'Helvetica', fontSize: 12,)
+        msg,
+        style: const TextStyle(
+          color: Colors.red,
+          fontFamily: 'Helvetica',
+          fontSize: 12,
+        ),
       ),
     );
   }
