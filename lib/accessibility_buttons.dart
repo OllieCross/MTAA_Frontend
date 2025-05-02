@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'app_settings.dart';
 
@@ -9,29 +9,33 @@ class AccessibilityButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettings>();
 
-    final isBigText = settings.textScaleFactor > 1.0;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          ElevatedButton(
-            onPressed: () {
-              if (isBigText) {
-                settings.setSmallText();
-              } else {
-                settings.setBigText();
-              }
-            },
-            child: Text(isBigText ? 'Text MALÝ' : 'Text VEĽKÝ'),
+          // Text size toggle
+          Column(
+            children: [
+              const Icon(CupertinoIcons.textformat_size, size: 24),
+              const SizedBox(height: 8),
+              CupertinoSwitch(
+                value: settings.textScale,
+                onChanged: (_) => settings.toggleText(),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: settings.toggleContrast,
-            child: Text(
-              settings.highContrast ? 'Kontrast Normálny' : 'Kontrast Vysoký',
-            ),
+
+          // Contrast toggle
+          Column(
+            children: [
+              const Icon(CupertinoIcons.circle_lefthalf_fill, size: 24),
+              const SizedBox(height: 8),
+              CupertinoSwitch(
+                value: settings.highContrast,
+                onChanged: (_) => settings.toggleContrast(),
+              ),
+            ],
           ),
         ],
       ),

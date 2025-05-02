@@ -1,24 +1,37 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+class AppColors {
+  AppColors._();
+  static const Color color1 = Colors.red;
+  static const Color color1Dark = Colors.red;
+  static const Color color1High = Color.fromARGB(255, 255, 0, 0);
+  static const Color color1DarkHigh = Color.fromARGB(255, 255, 0, 0);
+
+  static const Color colorBg = Color.fromARGB(255, 233, 233, 233);
+  static const Color colorBgDark = Color.fromARGB(255, 17, 17, 17);
+  static const Color colorBgHigh = Colors.white;
+  static const Color colorBgDarkHigh = Colors.black;
+
+  static const Color colorText = Color.fromARGB(255, 15, 15, 15);
+  static const Color colorTextDark = Color.fromARGB(255, 240, 240, 240);
+  static const Color colorTextHigh = Colors.black;
+  static const Color colorTextDarkHigh = Colors.white;
+}
 
 class AppSettings extends ChangeNotifier {
-  double _textScaleFactor = 1.0;     // 1.0 = malý, 1.4 = veľký
-  bool   _highContrast     = true;  // false = normálny, true = vysoký
+  bool _textScale = false;
+  bool _highContrast = false;
 
-  double get textScaleFactor => _textScaleFactor;
-  bool   get highContrast     => _highContrast;
-
-  void setSmallText()  => _updateTextScale(1.0);
-  void setBigText()    => _updateTextScale(1.4);
+  bool get textScale => _textScale;
+  bool get highContrast => _highContrast;
 
   void toggleContrast() {
     _highContrast = !_highContrast;
     notifyListeners();
   }
 
-  // ---------------- private ----------------
-  void _updateTextScale(double value) {
-    if (value == _textScaleFactor) return;
-    _textScaleFactor = value;
+  void toggleText() {
+    _textScale = !_textScale;
     notifyListeners();
   }
 }
