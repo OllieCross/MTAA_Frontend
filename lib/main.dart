@@ -1,11 +1,13 @@
+// main.dart
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'main_screen_accommodations.dart';
 import 'register.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'server_config.dart';
-import 'package:provider/provider.dart';
 import 'app_settings.dart';
 
 String? globalToken;
@@ -24,306 +26,331 @@ class RoomFinderApp extends StatelessWidget {
   const RoomFinderApp({super.key});
 
   @override
+  Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarBrightness: Brightness.dark,
+          statusBarIconBrightness: Brightness.light,
+        ),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData.light(useMaterial3: true),
+          darkTheme: ThemeData.dark(useMaterial3: true),
+          themeMode: ThemeMode.system,
+          home: const LoginScreen(),
+        ),
+      );
+}
+
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
+
+  @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value:
-          MediaQuery.of(context).platformBrightness == Brightness.dark
-              ? SystemUiOverlayStyle.light
-              : SystemUiOverlayStyle.dark,
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData.light(),
-        darkTheme: ThemeData.dark(),
-        themeMode: ThemeMode.system,
-        home: LoginScreen(),
+    return AdaptiveLayout(
+      body: SlotLayout(
+        config: <Breakpoint, SlotLayoutConfig>{
+          // Handsets: one column, small logo above the form
+          Breakpoints.small: SlotLayout.from(
+            key: const Key('phone-layout'),
+            builder: (_) => const _PhoneLogin(),
+          ),
+          // Tablets / desktops: two-pane layout; no second logo
+          Breakpoints.medium: SlotLayout.from(
+            key: const Key('tablet-layout'),
+            builder: (_) => const _TabletLogin(),
+          ),
+        },
       ),
     );
   }
 }
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+/// Phone / narrow layout (single column)
+class _PhoneLogin extends StatelessWidget {
+  const _PhoneLogin();
+
   @override
-  LoginScreenState createState() => LoginScreenState();
+  Widget build(BuildContext context) => _ScaffoldWrapper(
+        child: const _LoginForm(maxWidth: 500, showTopLogo: true),
+      );
 }
 
-class LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+/// Tablet / wide layout (logo left, form right)
+class _TabletLogin extends StatelessWidget {
+  const _TabletLogin();
 
-  bool _emailError = false;
-  bool _passwordError = false;
-  bool _obscurePassword = true;
-  String? _emailErrorMessage;
-  String? _loginErrorMessage;
+  @override
+  Widget build(BuildContext context) => _ScaffoldWrapper(
+        child: Row(
+          children: [
+            // big logo pane
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(40),
+                child: Image.asset(
+                  Theme.of(context).brightness == Brightness.dark
+                      ? 'assets/logo_dark.png'
+                      : 'assets/logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            // form pane (no duplicate logo)
+            const Expanded(
+              child: Center(
+                child: _LoginForm(maxWidth: 420, showTopLogo: false),
+              ),
+            ),
+          ],
+        ),
+      );
+}
 
-  bool _isValidEmail(String email) {
-    final RegExp regex = RegExp(
-      r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
-    );
-    return regex.hasMatch(email);
-  }
+/// Adds SafeArea + scroll + some padding
+class _ScaffoldWrapper extends StatelessWidget {
+  const _ScaffoldWrapper({required this.child});
+  final Widget child;
 
-  /// 1) Perform only local validation here
-  void _validateFields() {
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: ConstrainedBox(
+                constraints:
+                    BoxConstraints(minHeight: constraints.maxHeight - 40),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+class _LoginForm extends StatefulWidget {
+  const _LoginForm({
+    required this.maxWidth,
+    this.showTopLogo = true,
+  });
+
+  final double maxWidth;
+  final bool   showTopLogo;
+
+  @override
+  State<_LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<_LoginForm> {
+  final _email    = TextEditingController();
+  final _password = TextEditingController();
+
+  bool   _emailError = false,
+          _passwordError = false,
+          _obscure = true;
+  String? _emailErrorMsg, _loginErrorMsg;
+
+  bool _validEmail(String v) =>
+      RegExp(r'^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$')
+          .hasMatch(v);
+
+  void _validate() {
     setState(() {
-      _emailError =
-          _emailController.text.isEmpty ||
-          !_isValidEmail(_emailController.text);
-      _passwordError = _passwordController.text.isEmpty;
-      _emailErrorMessage =
-          _emailController.text.isEmpty
-              ? "This text field cannot be empty"
-              : (!_isValidEmail(_emailController.text)
-                  ? "Invalid email format"
-                  : null);
+      _emailError = _email.text.isEmpty || !_validEmail(_email.text);
+      _passwordError = _password.text.isEmpty;
+      _emailErrorMsg = _email.text.isEmpty
+          ? 'This text field cannot be empty'
+          : !_validEmail(_email.text)
+              ? 'Invalid email format'
+              : null;
     });
   }
 
-  /// 2) After local validation, call the server if no local error
-  Future<void> _attemptLogin() async {
-    _validateFields(); // local validation
-    if (_emailError || _passwordError) {
-      return; // Stop if local checks fail
-    }
+  Future<void> _login() async {
+    _validate();
+    if (_emailError || _passwordError) return;
 
-    // Clear any previous API error
-    setState(() => _loginErrorMessage = null);
-
-    final email = _emailController.text;
-    final password = _passwordController.text;
+    setState(() => _loginErrorMsg = null);
 
     try {
-      // 4) Send the hashed password to match what Flask is expecting
-      final response = await http.post(
+      final res = await http.post(
         Uri.parse('http://$serverIp:$serverPort/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        body: jsonEncode({
+          'email': _email.text,
+          'password': _password.text,
+        }),
       );
 
-      if (response.statusCode == 200) {
-        // Success: Move to next screen
-        globalToken = jsonDecode(response.body)['token'];
+      if (res.statusCode == 200) {
+        globalToken = jsonDecode(res.body)['token'];
+        if (!mounted) return;
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => MainScreenAccommodations()),
+          MaterialPageRoute(builder: (_) => MainScreenAccommodations()),
         );
       } else {
-        // Failure: Show error message, do not navigate
-        setState(() => _loginErrorMessage = "invalid email or password");
+        setState(() => _loginErrorMsg = 'Invalid email or password');
       }
     } catch (e) {
-      // Connection or server error
-      setState(() {
-        _loginErrorMessage = "connection error: $e";
-      });
+      setState(() => _loginErrorMsg = 'Connection error: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode =
-        MediaQuery.of(context).platformBrightness == Brightness.dark;
+    // Settings coming from Provider
+    final settings      = context.watch<AppSettings>();
+    final bigText       = settings.bigText;
+    final highContrast  = settings.highContrast;
+    final isDark        = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor:
-          isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Logo
+    // TextStyle you requested for the Login label
+    final loginLabelStyle = TextStyle(
+      fontSize: bigText ? 20 : 16,
+      color: highContrast
+          ? (isDark ? AppColors.colorTextDarkHigh : AppColors.colorTextHigh)
+          : (isDark ? AppColors.colorTextDark     : AppColors.colorText),
+      fontFamily: 'Helvetica',
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+    );
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: widget.maxWidth),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (widget.showTopLogo)
               Container(
                 width: 240,
                 height: 240,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.rectangle,
-                  color: Colors.transparent,
-                ),
+                margin: const EdgeInsets.only(bottom: 10),
                 child: Image.asset(
-                  isDarkMode ? 'assets/logo_dark.png' : 'assets/logo.png',
+                  isDark ? 'assets/logo_dark.png' : 'assets/logo.png',
                   fit: BoxFit.contain,
                 ),
               ),
 
-              // Email Input Field
-              Stack(
-                children: [
-                  Container(
-                    height: 55,
-                    margin: const EdgeInsets.only(bottom: 5),
-                    decoration: BoxDecoration(
+            _ShadowBox(
+              child: TextField(
+                controller: _email,
+                decoration: _inputDecoration(
+                  context,
+                  hint: 'Email',
+                  errorText: _emailError ? _emailErrorMsg : null,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            _ShadowBox(
+              child: TextField(
+                controller: _password,
+                obscureText: _obscure,
+                decoration: _inputDecoration(
+                  context,
+                  hint: 'Password',
+                  errorText: _passwordError
+                      ? 'This text field cannot be empty'
+                      : null,
+                ).copyWith(
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            _ShadowBox(
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[400],
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
                     ),
                   ),
-                  TextField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor:
-                          isDarkMode ? Colors.grey[800] : Colors.grey[300],
-                      hintText: "Email",
-                      hintStyle: TextStyle(
-                        color: isDarkMode ? Colors.white70 : Colors.black54,
-                        fontFamily: 'Helvetica',
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      errorText: _emailError ? _emailErrorMessage : null,
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  onPressed: _login,
+                  child: Text('Login', style: loginLabelStyle),
+                ),
               ),
+            ),
+
+            if (_loginErrorMsg != null) ...[
               const SizedBox(height: 10),
-
-              // Password Input Field
-              Stack(
-                children: [
-                  Container(
-                    height: 55,
-                    margin: const EdgeInsets.only(bottom: 5),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor:
-                          isDarkMode ? Colors.grey[800] : Colors.grey[300],
-                      hintText: "Password",
-                      hintStyle: TextStyle(
-                        color: isDarkMode ? Colors.white70 : Colors.black54,
-                        fontFamily: 'Helvetica',
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: isDarkMode ? Colors.white70 : Colors.black54,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      errorText:
-                          _passwordError
-                              ? "This text field cannot be empty"
-                              : null,
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Colors.red,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Login Button
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(2, 2),
-                    ),
-                  ],
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _attemptLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[400],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      "Login",
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontFamily: 'Helvetica',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Show login error (API error) if any
-              if (_loginErrorMessage != null) ...[
-                Text(
-                  _loginErrorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ],
-
-              // Register text button
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RegisterScreen(),
-                    ),
-                  );
-                },
-                child: Text(
-                  "Register",
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                    decoration: TextDecoration.underline,
-                    fontFamily: 'Helvetica',
-                  ),
-                ),
-              ),
+              Text(_loginErrorMsg!, style: const TextStyle(color: Colors.red)),
             ],
-          ),
+
+            TextButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RegisterScreen()),
+              ),
+              child: Text(
+                'Register',
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : Colors.black54,
+                  decoration: TextDecoration.underline,
+                  fontFamily: 'Helvetica',
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  // helper for consistent decoration
+  InputDecoration _inputDecoration(BuildContext ctx,
+      {required String hint, String? errorText}) {
+    final isDark = Theme.of(ctx).brightness == Brightness.dark;
+    return InputDecoration(
+      filled: true,
+      fillColor: isDark ? Colors.grey[800] : Colors.grey[300],
+      hintText: hint,
+      hintStyle: TextStyle(
+        color: isDark ? Colors.white70 : Colors.black54,
+        fontFamily: 'Helvetica',
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide.none,
+      ),
+      errorText: errorText,
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.red, width: 2),
+      ),
+    );
+  }
+}
+
+/// Re-usable container with drop shadow (so code above stays clean)
+class _ShadowBox extends StatelessWidget {
+  const _ShadowBox({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 55,
+        margin: const EdgeInsets.only(bottom: 5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(2, 2),
+            ),
+          ],
+        ),
+        child: child,
+      );
 }
