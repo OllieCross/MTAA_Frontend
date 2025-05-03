@@ -27,18 +27,18 @@ class RoomFinderApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          statusBarBrightness: Brightness.dark,
-          statusBarIconBrightness: Brightness.light,
-        ),
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData.light(useMaterial3: true),
-          darkTheme: ThemeData.dark(useMaterial3: true),
-          themeMode: ThemeMode.system,
-          home: const LoginScreen(),
-        ),
-      );
+    value: SystemUiOverlayStyle(
+      statusBarBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
+    ),
+    child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.light(useMaterial3: true),
+      darkTheme: ThemeData.dark(useMaterial3: true),
+      themeMode: ThemeMode.system,
+      home: const LoginScreen(),
+    ),
+  );
 }
 
 class LoginScreen extends StatelessWidget {
@@ -71,8 +71,8 @@ class _PhoneLogin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _ScaffoldWrapper(
-        child: const _LoginForm(maxWidth: 500, showTopLogo: true),
-      );
+    child: const _LoginForm(maxWidth: 500, showTopLogo: true),
+  );
 }
 
 /// Tablet / wide layout (logo left, form right)
@@ -81,29 +81,27 @@ class _TabletLogin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _ScaffoldWrapper(
-        child: Row(
-          children: [
-            // big logo pane
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(40),
-                child: Image.asset(
-                  Theme.of(context).brightness == Brightness.dark
-                      ? 'assets/logo_dark.png'
-                      : 'assets/logo.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
+    child: Row(
+      children: [
+        // big logo pane
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: Image.asset(
+              Theme.of(context).brightness == Brightness.dark
+                  ? 'assets/logo_dark.png'
+                  : 'assets/logo.png',
+              fit: BoxFit.contain,
             ),
-            // form pane (no duplicate logo)
-            const Expanded(
-              child: Center(
-                child: _LoginForm(maxWidth: 420, showTopLogo: false),
-              ),
-            ),
-          ],
+          ),
         ),
-      );
+        // form pane (no duplicate logo)
+        const Expanded(
+          child: Center(child: _LoginForm(maxWidth: 420, showTopLogo: false)),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Adds SafeArea + scroll + some padding
@@ -113,54 +111,51 @@ class _ScaffoldWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
+    body: SafeArea(
+      child: LayoutBuilder(
+        builder:
+            (context, constraints) => SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: ConstrainedBox(
-                constraints:
-                    BoxConstraints(minHeight: constraints.maxHeight - 40),
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 40,
+                ),
                 child: child,
               ),
             ),
-          ),
-        ),
-      );
+      ),
+    ),
+  );
 }
 
 class _LoginForm extends StatefulWidget {
-  const _LoginForm({
-    required this.maxWidth,
-    this.showTopLogo = true,
-  });
+  const _LoginForm({required this.maxWidth, this.showTopLogo = true});
 
   final double maxWidth;
-  final bool   showTopLogo;
+  final bool showTopLogo;
 
   @override
   State<_LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<_LoginForm> {
-  final _email    = TextEditingController();
+  final _email = TextEditingController();
   final _password = TextEditingController();
 
-  bool   _emailError = false,
-          _passwordError = false,
-          _obscure = true;
+  bool _emailError = false, _passwordError = false, _obscure = true;
   String? _emailErrorMsg, _loginErrorMsg;
 
   bool _validEmail(String v) =>
-      RegExp(r'^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$')
-          .hasMatch(v);
+      RegExp(r'^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$').hasMatch(v);
 
   void _validate() {
     setState(() {
       _emailError = _email.text.isEmpty || !_validEmail(_email.text);
       _passwordError = _password.text.isEmpty;
-      _emailErrorMsg = _email.text.isEmpty
-          ? 'This text field cannot be empty'
-          : !_validEmail(_email.text)
+      _emailErrorMsg =
+          _email.text.isEmpty
+              ? 'This text field cannot be empty'
+              : !_validEmail(_email.text)
               ? 'Invalid email format'
               : null;
     });
@@ -176,10 +171,7 @@ class _LoginFormState extends State<_LoginForm> {
       final res = await http.post(
         Uri.parse('http://$serverIp:$serverPort/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': _email.text,
-          'password': _password.text,
-        }),
+        body: jsonEncode({'email': _email.text, 'password': _password.text}),
       );
 
       if (res.statusCode == 200) {
@@ -200,19 +192,14 @@ class _LoginFormState extends State<_LoginForm> {
   @override
   Widget build(BuildContext context) {
     // Settings coming from Provider
-    final settings      = context.watch<AppSettings>();
-    final bigText       = settings.bigText;
-    final highContrast  = settings.highContrast;
-    final isDark        = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // TextStyle you requested for the Login label
     final loginLabelStyle = TextStyle(
-      fontSize: bigText ? 20 : 16,
-      color: highContrast
-          ? (isDark ? AppColors.colorTextDarkHigh : AppColors.colorTextHigh)
-          : (isDark ? AppColors.colorTextDark     : AppColors.colorText),
+      fontSize: 16,
+      color: isDark ? AppColors.colorTextDark : AppColors.colorTextDarkHigh,
       fontFamily: 'Helvetica',
-      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      fontWeight: FontWeight.normal,
     );
 
     return Center(
@@ -251,13 +238,13 @@ class _LoginFormState extends State<_LoginForm> {
                 decoration: _inputDecoration(
                   context,
                   hint: 'Password',
-                  errorText: _passwordError
-                      ? 'This text field cannot be empty'
-                      : null,
+                  errorText:
+                      _passwordError ? 'This text field cannot be empty' : null,
                 ).copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off),
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                    ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
@@ -288,10 +275,11 @@ class _LoginFormState extends State<_LoginForm> {
             ],
 
             TextButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const RegisterScreen()),
-              ),
+              onPressed:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  ),
               child: Text(
                 'Register',
                 style: TextStyle(
@@ -308,8 +296,11 @@ class _LoginFormState extends State<_LoginForm> {
   }
 
   // helper for consistent decoration
-  InputDecoration _inputDecoration(BuildContext ctx,
-      {required String hint, String? errorText}) {
+  InputDecoration _inputDecoration(
+    BuildContext ctx, {
+    required String hint,
+    String? errorText,
+  }) {
     final isDark = Theme.of(ctx).brightness == Brightness.dark;
     return InputDecoration(
       filled: true,
@@ -339,18 +330,14 @@ class _ShadowBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        height: 55,
-        margin: const EdgeInsets.only(bottom: 5),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 4,
-              offset: Offset(2, 2),
-            ),
-          ],
-        ),
-        child: child,
-      );
+    height: 55,
+    margin: const EdgeInsets.only(bottom: 5),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: const [
+        BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(2, 2)),
+      ],
+    ),
+    child: child,
+  );
 }

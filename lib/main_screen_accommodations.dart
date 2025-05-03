@@ -431,9 +431,10 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                                             item['location'],
                                             style: TextStyle(
                                               fontSize: bigText ? 24 : 18,
-                                              fontWeight: bigText
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
+                                              fontWeight:
+                                                  bigText
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
                                               color:
                                                   highContrast
                                                       ? (isDark
@@ -454,9 +455,10 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                                             '${item['price_per_night']} € / Night',
                                             style: TextStyle(
                                               fontSize: bigText ? 20 : 16,
-                                              fontWeight: bigText
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
+                                              fontWeight:
+                                                  bigText
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
                                               color:
                                                   highContrast
                                                       ? (isDark

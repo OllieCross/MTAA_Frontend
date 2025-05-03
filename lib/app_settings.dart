@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   AppColors._();
-  static const Color color1 = Colors.red;
-  static const Color color1Dark = Colors.red;
+  static const Color color1 = Color.fromARGB(255, 239, 83, 80);
+  static const Color color1Dark = Color.fromARGB(255, 239, 83, 80);
   static const Color color1High = Color.fromARGB(255, 255, 0, 0);
   static const Color color1DarkHigh = Color.fromARGB(255, 255, 0, 0);
 
@@ -16,6 +16,11 @@ class AppColors {
   static const Color colorTextDark = Color.fromARGB(255, 240, 240, 240);
   static const Color colorTextHigh = Colors.black;
   static const Color colorTextDarkHigh = Colors.white;
+
+  static const Color colorTextField = Color.fromARGB(255, 15, 15, 15);
+  static const Color colorTextFieldDark = Color.fromARGB(255, 240, 240, 240);
+  static const Color colorTextFieldHigh = Colors.black;
+  static const Color colorTextFieldDarkHigh = Colors.white;
 }
 
 class AppSettings extends ChangeNotifier {

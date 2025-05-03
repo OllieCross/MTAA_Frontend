@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'server_config.dart';
+import 'register_succesful.dart';
+import 'app_settings.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -79,7 +81,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (response.statusCode == 201) {
           if (!mounted) return;
-          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => ReigsterSuccesful()),
+          );
         } else {
           final body = jsonDecode(response.body);
           setState(() {
@@ -100,10 +105,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         MediaQuery.of(context).platformBrightness == Brightness.dark;
     return Scaffold(
       backgroundColor:
-          isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
+          isDarkMode ? AppColors.colorBgDark : AppColors.colorBg,
       appBar: AppBar(
         backgroundColor:
-            isDarkMode ? const Color.fromARGB(255, 34, 34, 34) : Colors.white,
+            isDarkMode ? AppColors.colorBgDark : AppColors.colorBg,
       ),
       body: Center(
         // Center the content both vertically and horizontally
@@ -132,6 +137,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _buildFieldContainer(
                   child: TextField(
                     controller: _emailController,
+                    style : const TextStyle(
+                      fontFamily: 'Helvetica',
+                      fontSize: 16,
+                    ),
                     decoration: _buildInputDecoration(
                       hintText: 'Email',
                       hasError: _emailErrorMessage != null,
@@ -148,6 +157,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: TextField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style : const TextStyle(
+                      fontFamily: 'Helvetica',
+                      fontSize: 16,
+                    ),
                     decoration: _buildInputDecoration(
                       hintText: 'Password',
                       hasError: _passwordErrorMessage != null,
@@ -176,6 +189,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: TextField(
                     controller: _repeatPasswordController,
                     obscureText: _obscurePassword2,
+                    style : const TextStyle(
+                      fontFamily: 'Helvetica',
+                      fontSize: 16,
+                    ),
                     decoration: _buildInputDecoration(
                       hintText: 'Repeat Password',
                       hasError: _repeatPasswordErrorMessage != null,

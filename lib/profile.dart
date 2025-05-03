@@ -45,7 +45,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _deleteReservation(int rid) async {
-    final url = Uri.parse('http://$serverIp:$serverPort/delete-reservation/$rid');
+    final url = Uri.parse(
+      'http://$serverIp:$serverPort/delete-reservation/$rid',
+    );
     final token = globalToken;
 
     final response = await http.delete(
@@ -70,15 +72,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final highContrast = settings.highContrast;
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    final backgroundColor = highContrast
-        ? (isDark ? Colors.black : Colors.white)
-        : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
-    final textColor = highContrast
-        ? (isDark ? Colors.white : Colors.black)
-        : (isDark ? Colors.white70 : Colors.black87);
-    final boxColor = highContrast
-        ? (isDark ? Colors.grey[900] : Colors.white)
-        : (isDark ? Colors.grey[800] : Colors.grey[200]);
+    final backgroundColor =
+        highContrast
+            ? (isDark ? Colors.black : Colors.white)
+            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
+    final textColor =
+        highContrast
+            ? (isDark ? Colors.white : Colors.black)
+            : (isDark ? Colors.white70 : Colors.black87);
+    final boxColor =
+        highContrast
+            ? (isDark ? Colors.grey[900] : Colors.white)
+            : (isDark ? Colors.grey[800] : Colors.grey[200]);
     final iconColor = textColor;
 
     return Scaffold(
@@ -94,6 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   "Your Reservations",
                   style: TextStyle(
                     fontSize: 22,
+                    fontFamily: 'Helvetica',
                     fontWeight: FontWeight.bold,
                     color: textColor,
                   ),
@@ -102,62 +108,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const AccessibilityButtons(),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: reservations.isEmpty
-                      ? Center(
-                          child: Text("No reservations yet.",
-                              style: TextStyle(color: textColor)))
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: reservations.length,
-                          itemBuilder: (context, index) {
-                            final res = reservations[index];
-                            final location = "${res['city']}, ${res['country']}";
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: boxColor,
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: isDark
-                                        ? Colors.black26
-                                        : Colors.black12,
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  )
-                                ],
+                  child:
+                      reservations.isEmpty
+                          ? Center(
+                            child: Text(
+                              "No reservations yet.",
+                              style: TextStyle(color: textColor,
+                                fontSize: settings.bigText ? 20 : 16,
+                                fontWeight: settings.bigText ? FontWeight.bold : FontWeight.normal,
+                                fontFamily: 'Helvetica',
                               ),
-                              height: 50,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    location,
-                                    style: TextStyle(
-                                        fontSize: 16, color: textColor),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.delete_outline,
-                                        color: iconColor),
-                                    onPressed: () =>
-                                        _deleteReservation(res['rid']),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                            ),
+                          )
+                          : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: reservations.length,
+                            itemBuilder: (context, index) {
+                              final res = reservations[index];
+                              final location =
+                                  "${res['city']}, ${res['country']}";
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: boxColor,
+                                  borderRadius: BorderRadius.circular(30),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          isDark
+                                              ? Colors.black26
+                                              : Colors.black12,
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                height: 50,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      location,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.delete_outline,
+                                        color: iconColor,
+                                      ),
+                                      onPressed:
+                                          () => _deleteReservation(res['rid']),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                 ),
                 const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                      backgroundColor:
+                          highContrast
+                              ? (isDark
+                                  ? AppColors.color1Dark
+                                  : AppColors.color1)
+                              : (isDark
+                                  ? AppColors.color1DarkHigh
+                                  : AppColors.color1High),
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -171,9 +198,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       "My Accommodations",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(
+                        color:
+                            highContrast
+                                ? AppColors.colorTextDark
+                                : AppColors.colorTextFieldDarkHigh,
+                        fontSize: settings.bigText ? 20 : 16,
+                        fontWeight: settings.bigText ? FontWeight.bold : FontWeight.normal,
+                        fontFamily: 'Helvetica',
+                      ),
                     ),
                   ),
                 ),
