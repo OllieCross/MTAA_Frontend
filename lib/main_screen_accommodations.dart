@@ -215,7 +215,12 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                                           filled: true,
                                           fillColor:
                                               isDark
-                                                  ? Colors.grey[800]
+                                                  ? Color.fromARGB(
+                                                    255,
+                                                    66,
+                                                    66,
+                                                    66,
+                                                  )
                                                   : const Color.fromARGB(
                                                     255,
                                                     224,
@@ -642,8 +647,13 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                               filled: true,
                               fillColor:
                                   isDark
-                                      ? AppColors.colorInputBgDark
-                                      : AppColors.colorInputBg,
+                                      ? Color.fromARGB(255, 66, 66, 66)
+                                      : const Color.fromARGB(
+                                        255,
+                                        224,
+                                        224,
+                                        224,
+                                      ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide: BorderSide.none,

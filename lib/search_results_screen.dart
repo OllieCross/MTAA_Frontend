@@ -91,8 +91,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             : (isDark ? AppColors.colorTextDark : AppColors.colorText);
     final cardColor =
         highContrast
-            ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
-            : (isDark ? Colors.grey[800]! : Colors.grey[200]!);
+            ? (isDark ? const Color.fromARGB(255, 30, 30, 30) : AppColors.colorBgHigh)
+            : (isDark ? Colors.grey[800]! : const Color.fromARGB(255, 232, 232, 232));
 
     final headerStyle = TextStyle(
       fontSize: bigText ? 18 : 16,
@@ -129,8 +129,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       appBar: AppBar(
         title: Text('Results', style: headerStyle),
         backgroundColor: backgroundColor,
-        foregroundColor: backgroundColor,
-        elevation: 0.5,
       ),
       body: Column(
         children: [
@@ -141,6 +139,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               decoration: BoxDecoration(
                 color: cardColor,
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black45,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -186,6 +191,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                 },
                                 child: Card(
                                   color: cardColor,
+                                  elevation: 4,
+                                  shadowColor: Colors.black45,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
@@ -244,6 +251,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                 },
                                 child: Card(
                                   color: cardColor,
+                                  elevation: 4,
+                                  shadowColor: Colors.black45,
                                   margin: const EdgeInsets.only(bottom: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),

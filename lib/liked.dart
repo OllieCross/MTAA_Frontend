@@ -76,9 +76,7 @@ class _LikedScreenState extends State<LikedScreen> {
       height: 180,
       width: double.infinity,
       headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
-      errorBuilder:
-          (context, error, stackTrace) =>
-              const SizedBox(height: 180, child: Placeholder()),
+      errorBuilder: (_, __, ___) => const SizedBox(height: 180, child: Placeholder()),
     );
   }
 
@@ -86,134 +84,214 @@ class _LikedScreenState extends State<LikedScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettings>();
     final highContrast = settings.highContrast;
-    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final bigText = settings.bigText;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final backgroundColor =
-        highContrast
-            ? (isDark ? Colors.black : Colors.white)
-            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
-    final textColor =
-        highContrast
-            ? (isDark ? const Color.fromARGB(255, 150, 150, 150) : Colors.black)
-            : (isDark
-                ? const Color.fromARGB(255, 150, 150, 150)
-                : Colors.black87);
-    final boxColor =
-        highContrast
-            ? (isDark ? Colors.grey[900] : Colors.white)
-            : (isDark ? Colors.grey[800] : Colors.grey[200]);
+    final backgroundColor = highContrast
+        ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+        : (isDark ? AppColors.colorBgDark : AppColors.colorBg);
+    final textColor = highContrast
+        ? (isDark ? AppColors.colorTextDarkHigh : AppColors.colorTextHigh)
+        : (isDark ? AppColors.colorTextDark : AppColors.colorText);
+    final boxColor = highContrast
+        ? (isDark ? const Color.fromARGB(255, 30, 30, 30) : AppColors.colorBgHigh)
+        : (isDark ? Colors.grey[800]! : Colors.grey[200]!);
+
+    final headerStyle = TextStyle(
+      fontSize: bigText ? 24 : 20,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
+    final captionStyle = TextStyle(
+      fontSize: bigText ? 18 : 16,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
+    final itemTitleStyle = TextStyle(
+      fontSize: bigText ? 18 : 16,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
+    final priceStyle = TextStyle(
+      fontSize: bigText ? 16 : 14,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
+
+    final heartColor = highContrast
+        ? (isDark ? AppColors.color1High : AppColors.color1High)
+        : AppColors.color1;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       bottomNavigationBar: const BottomNavBar(currentIndex: 1),
       body: SafeArea(
-        child:
-            likedAccommodations.isEmpty
-                ? Center(
-                  child: Text(
-                    "No liked accommodations found.",
-                    style: TextStyle(color: textColor),
-                  ),
-                )
-                : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Icon(Icons.favorite_border, size: 48, color: textColor),
-                      const SizedBox(height: 8),
-                      Center(
-                        child: Text(
-                          "Your likes",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
+        child: likedAccommodations.isEmpty
+            ? Center(
+                child: Text(
+                  "No liked accommodations found.",
+                  style: captionStyle,
+                ),
+              )
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth > 600) {
+                    return Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.favorite_border, size: bigText ? 56 : 48, color: textColor),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Your likes",
+                                style: headerStyle,
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      ListView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: likedAccommodations.length,
-                        itemBuilder: (context, index) {
-                          final item = likedAccommodations[index];
-
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) => AccommodationDetailScreen(
-                                        aid: item['aid'],
+                        Expanded(
+                          flex: 1,
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              children: likedAccommodations.map((item) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => AccommodationDetailScreen(aid: item['aid']),
                                       ),
-                                ),
-                              );
-                            },
-                            child: Card(
-                              color: boxColor,
-                              margin: const EdgeInsets.only(bottom: 16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius:
-                                            const BorderRadius.vertical(
-                                              top: Radius.circular(10),
-                                            ),
-                                        child: _buildImage(item['aid']),
-                                      ),
-                                      Positioned(
-                                        top: 10,
-                                        right: 10,
-                                        child: IconButton(
-                                          icon: const Icon(
-                                            Icons.favorite,
-                                            color: Colors.red,
-                                          ),
-                                          onPressed:
-                                              () => _toggleLike(item['aid']),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(12),
+                                    );
+                                  },
+                                  child: Card(
+                                    color: boxColor,
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          item['location'],
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                            color: textColor,
-                                          ),
+                                        ClipRRect(
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                                          child: _buildImage(item['aid']),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${item['price_per_night']} € / Night',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: textColor,
+                                        Padding(
+                                          padding: const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      item['location'],
+                                                      style: itemTitleStyle,
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: Icon(Icons.favorite, color: heartColor),
+                                                    onPressed: () => _toggleLike(item['aid']),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                '${item['price_per_night']} € / Night',
+                                                style: priceStyle,
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                ],
-                              ),
+                                );
+                              }).toList(),
                             ),
-                          );
-                        },
+                          ),
+                        ),
+                      ],
+                    );
+                  } else {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Icon(Icons.favorite_border, size: bigText ? 56 : 48, color: textColor),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Your likes",
+                            style: headerStyle,
+                          ),
+                          const SizedBox(height: 24),
+                          Column(
+                            children: likedAccommodations.map((item) {
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => AccommodationDetailScreen(aid: item['aid']),
+                                    ),
+                                  );
+                                },
+                                child: Card(
+                                  color: boxColor,
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                                        child: _buildImage(item['aid']),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    item['location'],
+                                                    style: itemTitleStyle,
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(Icons.favorite, color: heartColor),
+                                                  onPressed: () => _toggleLike(item['aid']),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${item['price_per_night']} € / Night',
+                                              style: priceStyle,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    );
+                  }
+                },
+              ),
       ),
     );
   }
