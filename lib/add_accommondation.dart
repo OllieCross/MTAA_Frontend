@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -32,8 +33,36 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
   void initState() {
     super.initState();
     final acc = widget.accommodation;
-    if (acc != null) {
-      nameController.text = acc['name'] ?? '';
+    if (acc != null && acc['aid'] != null) {
+      _fetchAccommodationDetails(acc['aid']);
+    }
+  }
+
+  Future<void> _fetchAccommodationDetails(int aid) async {
+    final token = globalToken;
+    if (token == null) return;
+
+    final url = Uri.parse('http://$serverIp:$serverPort/accommodation/$aid');
+    final response = await http.get(url, headers: {
+      'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final acc = data['accommodation'];
+
+      setState(() {
+        nameController.text = acc['name'] ?? '';
+        addressController.text = acc['location'] ?? '';
+        guestsController.text = acc['max_guests']?.toString() ?? '';
+        priceController.text = acc['price_per_night']?.toString() ?? '';
+        ibanController.text = acc['iban'] ?? '';
+        descriptionController.text = acc['description'] ?? '';
+      });
+
+      // Optionálne: načítaj obrázky ak chceš ich zobraziť aj v edite
+    } else {
+      debugPrint('Failed to fetch accommodation details');
     }
   }
 
@@ -139,12 +168,12 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     super.dispose();
   }
 
-  late final bool _bigText;
-  late final bool _highContrast;
-  late final bool _isDark;
-  late final Color _backgroundColor;
-  late final Color _textColor;
-  late final Color _fillColor;
+  late bool _bigText;
+  late bool _highContrast;
+  late bool _isDark;
+  late Color _backgroundColor;
+  late Color _textColor;
+  late Color _fillColor;
 
   void _initTheme(BuildContext context) {
     final settings = context.watch<AppSettings>();
