@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -24,194 +26,283 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettings>();
     final highContrast = settings.highContrast;
-    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final bigText = settings.bigText;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final backgroundColor =
         highContrast
-            ? (isDark ? Colors.black : Colors.white)
-            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
-
+            ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+            : (isDark ? AppColors.colorBgDark : AppColors.colorBg);
     final textColor =
         highContrast
-            ? (isDark ? Colors.white : Colors.black)
-            : (isDark ? Colors.white60 : Colors.black87);
-
-    final fillColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
+            ? (isDark ? AppColors.colorTextDarkHigh : AppColors.colorTextHigh)
+            : (isDark ? AppColors.colorTextDark : AppColors.colorText);
+    final fillColor =
+        highContrast
+            ? (isDark
+                ? AppColors.colorInputBgDarkHigh
+                : AppColors.colorInputBgHigh)
+            : (isDark ? AppColors.colorInputBgDark : AppColors.colorInputBg);
 
     final aid = widget.accommodation['aid'];
     final token = globalToken;
 
-    final imageUrl = 'http://$serverIp:$serverPort/accommodations/$aid/image/1';
-    final imageWidget = Image.network(
-      imageUrl,
+    final thumbnailImage = Image.network(
+      'http://$serverIp:$serverPort/accommodations/$aid/image/1',
       width: 100,
       height: 100,
       fit: BoxFit.cover,
       headers: token != null ? {'Authorization': 'Bearer $token'} : {},
       errorBuilder:
-          (context, error, stackTrace) =>
+          (_, __, ___) =>
               const Placeholder(fallbackWidth: 100, fallbackHeight: 100),
+    );
+
+    final fullImage = Image.network(
+      'http://$serverIp:$serverPort/accommodations/$aid/image/1',
+      width: double.infinity,
+      height: 200,
+      fit: BoxFit.cover,
+      headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      errorBuilder:
+          (_, __, ___) => const Placeholder(
+            fallbackWidth: double.infinity,
+            fallbackHeight: 200,
+          ),
+    );
+
+    final titleStyle = TextStyle(
+      fontSize: bigText ? 22 : 18,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
+    final bodyStyle = TextStyle(
+      fontSize: bigText ? 16 : 14,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
+    final buttonStyle = ElevatedButton.styleFrom(
+      backgroundColor:
+          highContrast
+              ? (isDark ? AppColors.color1DarkHigh : AppColors.color1High)
+              : (isDark ? AppColors.color1Dark : AppColors.color1),
+      padding: EdgeInsets.symmetric(
+        horizontal: bigText ? 36 : 30,
+        vertical: bigText ? 18 : 14,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 5,
+    );
+    final buttonTextStyle = TextStyle(
+      color:
+          highContrast
+              ? (isDark
+                  ? AppColors.colorButtonTextDarkHigh
+                  : AppColors.colorButtonTextHigh)
+              : (isDark
+                  ? AppColors.colorButtonTextDark
+                  : AppColors.colorButtonText),
+      fontSize: bigText ? 18 : 16,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      fontFamily: 'Helvetica',
+    );
+
+    Widget formColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildDatePicker(
+                label: 'From',
+                selectedDate: fromDate,
+                onDateSelected: (d) => setState(() => fromDate = d),
+                fillColor: fillColor,
+                textColor: textColor,
+                bigText: bigText,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildDatePicker(
+                label: 'To',
+                selectedDate: toDate,
+                onDateSelected: (d) => setState(() => toDate = d),
+                fillColor: fillColor,
+                textColor: textColor,
+                bigText: bigText,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          label: 'Name',
+          fillColor: fillColor,
+          textColor: textColor,
+          bigText: bigText,
+        ),
+        _buildTextField(
+          label: 'Surname',
+          fillColor: fillColor,
+          textColor: textColor,
+          bigText: bigText,
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                label: 'Street',
+                fillColor: fillColor,
+                textColor: textColor,
+                bigText: bigText,
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 80,
+              child: _buildTextField(
+                label: 'Nr.',
+                fillColor: fillColor,
+                textColor: textColor,
+                bigText: bigText,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                label: 'City',
+                fillColor: fillColor,
+                textColor: textColor,
+                bigText: bigText,
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 100,
+              child: _buildTextField(
+                label: 'Zip Code',
+                fillColor: fillColor,
+                textColor: textColor,
+                bigText: bigText,
+              ),
+            ),
+          ],
+        ),
+        _buildTextField(
+          label: 'Phone number',
+          keyboardType: TextInputType.phone,
+          fillColor: fillColor,
+          textColor: textColor,
+          bigText: bigText,
+        ),
+        _buildTextField(
+          label: 'Email address',
+          keyboardType: TextInputType.emailAddress,
+          fillColor: fillColor,
+          textColor: textColor,
+          bigText: bigText,
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: ElevatedButton(
+            style: buttonStyle,
+            onPressed: () => _confirmReservation(context),
+            child: Text('Confirm Reservation', style: buttonTextStyle),
+          ),
+        ),
+      ],
     );
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text("Your Reservation"),
+        title: Text('Your Reservation', style: titleStyle),
         backgroundColor: backgroundColor,
         foregroundColor: textColor,
         elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: imageWidget,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth > 600) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: fullImage,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(widget.accommodation['name'], style: titleStyle),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.accommodation['location'] ?? '',
+                          style: bodyStyle,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${widget.accommodation['max_guests']} Guests',
+                          style: bodyStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(child: formColumn),
+                ],
+              );
+            } else {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.accommodation['name'],
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: thumbnailImage,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.accommodation['name'],
+                              style: titleStyle,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              widget.accommodation['location'] ?? '',
+                              style: bodyStyle,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${widget.accommodation['max_guests']} Guests',
+                              style: bodyStyle,
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.accommodation['location'] ?? '',
-                        style: TextStyle(color: textColor),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "${widget.accommodation['max_guests']} Guests",
-                        style: TextStyle(color: textColor),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDatePicker(
-                    "From",
-                    fromDate,
-                    (picked) => setState(() => fromDate = picked),
-                    fillColor,
-                    textColor,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildDatePicker(
-                    "To",
-                    toDate,
-                    (picked) => setState(() => toDate = picked),
-                    fillColor,
-                    textColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildTextField(
-              label: 'Name',
-              fillColor: fillColor,
-              textColor: textColor,
-            ),
-            _buildTextField(
-              label: 'Surname',
-              fillColor: fillColor,
-              textColor: textColor,
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    label: 'Street',
-                    fillColor: fillColor,
-                    textColor: textColor,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 80,
-                  child: _buildTextField(
-                    label: 'Nr.',
-                    fillColor: fillColor,
-                    textColor: textColor,
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    label: 'City',
-                    fillColor: fillColor,
-                    textColor: textColor,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 100,
-                  child: _buildTextField(
-                    label: 'Zip Code',
-                    fillColor: fillColor,
-                    textColor: textColor,
-                  ),
-                ),
-              ],
-            ),
-            _buildTextField(
-              label: 'Phone number',
-              keyboardType: TextInputType.phone,
-              fillColor: fillColor,
-              textColor: textColor,
-            ),
-            _buildTextField(
-              label: 'Email address',
-              keyboardType: TextInputType.emailAddress,
-              fillColor: fillColor,
-              textColor: textColor,
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 5,
-                ),
-                onPressed: () => _confirmReservation(context),
-                child: const Text(
-                  "Confirm Reservation",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
+                  const SizedBox(height: 16),
+                  formColumn,
+                ],
+              );
+            }
+          },
         ),
       ),
     );
@@ -219,18 +310,29 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
 
   Widget _buildTextField({
     required String label,
+    TextInputType keyboardType = TextInputType.text,
     required Color fillColor,
     required Color textColor,
-    TextInputType keyboardType = TextInputType.text,
+    required bool bigText,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         keyboardType: keyboardType,
-        style: TextStyle(color: textColor),
+        style: TextStyle(
+          color: textColor,
+          fontSize: bigText ? 18 : 14,
+          fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+          fontFamily: 'Helvetica',
+        ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: textColor.withOpacity(0.8)),
+          labelStyle: TextStyle(
+            color: textColor.withOpacity(0.8),
+            fontSize: bigText ? 16 : 14,
+            fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+            fontFamily: 'Helvetica',
+          ),
           filled: true,
           fillColor: fillColor,
           border: OutlineInputBorder(
@@ -242,22 +344,42 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
     );
   }
 
-  Widget _buildDatePicker(
-    String label,
-    DateTime? selectedDate,
-    Function(DateTime) onPicked,
-    Color fillColor,
-    Color textColor,
-  ) {
+  Widget _buildDatePicker({
+    required String label,
+    required DateTime? selectedDate,
+    required ValueChanged<DateTime> onDateSelected,
+    required Color fillColor,
+    required Color textColor,
+    required bool bigText,
+  }) {
     return GestureDetector(
-      onTap: () async {
-        final picked = await showDatePicker(
+      onTap: () {
+        final now = DateTime.now();
+        if (label == 'To' && fromDate == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Please select the From date first.',
+                style: TextStyle(
+                  fontSize: bigText ? 16 : 14,
+                  fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+          );
+          return;
+        }
+        DateTime initialDate =
+            selectedDate ?? (label == 'To' ? fromDate! : now);
+        DateTime firstDate = label == 'To' ? fromDate! : now;
+        final lastDate = now.add(const Duration(days: 365));
+        _pickDate(
           context: context,
-          initialDate: selectedDate ?? DateTime.now(),
-          firstDate: DateTime.now(),
-          lastDate: DateTime.now().add(const Duration(days: 365)),
+          initialDate: initialDate,
+          firstDate: firstDate,
+          lastDate: lastDate,
+          onDateSelected: onDateSelected,
         );
-        if (picked != null) onPicked(picked);
       },
       child: Container(
         height: 50,
@@ -268,26 +390,82 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
         alignment: Alignment.center,
         child: Text(
           selectedDate != null
-              ? "${selectedDate.day}.${selectedDate.month}.${selectedDate.year}"
+              ? '${selectedDate.day}.${selectedDate.month}.${selectedDate.year}'
               : label,
-          style: TextStyle(fontSize: 16, color: textColor),
+          style: TextStyle(
+            fontSize: bigText ? 16 : 14,
+            color: textColor,
+            fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+            fontFamily: 'Helvetica',
+          ),
         ),
       ),
     );
   }
 
+  void _pickDate({
+    required BuildContext context,
+    required DateTime initialDate,
+    required DateTime firstDate,
+    required DateTime lastDate,
+    required ValueChanged<DateTime> onDateSelected,
+  }) {
+    if (Platform.isIOS) {
+      showCupertinoModalPopup(
+        context: context,
+        builder:
+            (_) => Container(
+              height: 260,
+              color: CupertinoColors.systemBackground.resolveFrom(context),
+              child: Column(
+                children: [
+                  Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      child: const Text('Done'),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                  Expanded(
+                    child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.date,
+                      initialDateTime: initialDate,
+                      minimumDate: firstDate,
+                      maximumDate: lastDate,
+                      onDateTimeChanged: onDateSelected,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+      );
+    } else {
+      showDatePicker(
+        context: context,
+        initialDate: initialDate,
+        firstDate: firstDate,
+        lastDate: lastDate,
+      ).then((picked) {
+        if (picked != null) onDateSelected(picked);
+      });
+    }
+  }
+
   Future<void> _confirmReservation(BuildContext context) async {
     if (fromDate == null || toDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select both dates.")),
+        const SnackBar(content: Text('Please select both dates.')),
       );
       return;
     }
-
     final token = globalToken;
     final url = Uri.parse('http://$serverIp:$serverPort/make-reservation');
     final aid = widget.accommodation['aid'];
-
     try {
       final response = await http.post(
         url,
@@ -301,7 +479,6 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
           'to': toDate!.toIso8601String().split('T')[0],
         }),
       );
-
       if (response.statusCode == 201) {
         Navigator.pushReplacement(
           context,
@@ -317,7 +494,7 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Network error: $e")));
+      ).showSnackBar(SnackBar(content: Text('Network error: $e')));
     }
   }
 }

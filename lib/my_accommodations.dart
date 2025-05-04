@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-
+import 'bottom_navbar.dart';
 import 'main.dart';
 import 'add_accommondation.dart';
 import 'server_config.dart';
@@ -69,7 +69,7 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
     }
   }
 
-  Widget _buildImage(int aid) {
+  Widget _buildImage(int aid, Color textColor) {
     final imageUrl = 'http://$serverIp:$serverPort/accommodations/$aid/image/1';
     return Image.network(
       imageUrl,
@@ -78,7 +78,7 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
       fit: BoxFit.cover,
       headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
       errorBuilder:
-          (context, error, stackTrace) =>
+          (_, __, ___) =>
               const SizedBox(width: 100, height: 100, child: Placeholder()),
     );
   }
@@ -87,29 +87,42 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettings>();
     final highContrast = settings.highContrast;
-    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final bigText = settings.bigText;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final backgroundColor =
         highContrast
-            ? (isDark ? Colors.black : Colors.white)
-            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
-
+            ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+            : (isDark ? AppColors.colorBgDark : AppColors.colorBg);
     final textColor =
         highContrast
-            ? (isDark ? Colors.white : Colors.black)
-            : (isDark ? Colors.white70 : Colors.black87);
-
+            ? (isDark ? AppColors.colorTextDarkHigh : AppColors.colorTextHigh)
+            : (isDark ? AppColors.colorTextDark : AppColors.colorText);
     final cardColor =
         highContrast
-            ? (isDark ? Colors.grey[900] : Colors.white)
-            : (isDark ? Colors.grey[800] : Colors.grey[200]);
+            ? (isDark
+                ? const Color.fromARGB(255, 29, 29, 29)
+                : AppColors.colorBgHigh)
+            : (isDark ? Colors.grey[800]! : Colors.grey[200]!);
 
-    final iconColor = textColor;
+    final titleStyle = TextStyle(
+      fontSize: bigText ? 22 : 18,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
+    final bodyStyle = TextStyle(
+      fontSize: bigText ? 16 : 14,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
 
     return Scaffold(
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text("My Accommodations"),
+        title: Text("My Accommodations", style: titleStyle),
         backgroundColor: backgroundColor,
         foregroundColor: textColor,
         elevation: 0,
@@ -120,84 +133,207 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
             child:
                 myAccommodations.isEmpty
                     ? Center(
-                      child: Text(
-                        "No accommodations found.",
-                        style: TextStyle(color: textColor),
-                      ),
+                      child: Text("No accommodations found.", style: bodyStyle),
                     )
-                    : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: myAccommodations.length,
-                      itemBuilder: (context, index) {
-                        final item = myAccommodations[index];
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: isDark ? Colors.black26 : Colors.black12,
-                                blurRadius: 6,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: _buildImage(item['aid']),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item['name'],
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: textColor,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      "${item['city']}, ${item['country']}",
-                                      style: TextStyle(color: textColor),
+                    : LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth > 600) {
+                          return GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 3,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                ),
+                            itemCount: myAccommodations.length,
+                            itemBuilder: (context, index) {
+                              final item = myAccommodations[index];
+                              return Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          isDark
+                                              ? Colors.black26
+                                              : Colors.black12,
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
                                     ),
                                   ],
                                 ),
-                              ),
-                              Column(
-                                children: [
-                                  IconButton(
-                                    icon: Icon(Icons.edit, color: iconColor),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (_) => AddAccommodationScreen(
-                                                accommodation: item,
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: _buildImage(
+                                        item['aid'],
+                                        textColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item['name'],
+                                            style: TextStyle(
+                                              fontSize: bigText ? 18 : 16,
+                                              fontWeight:
+                                                  bigText
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                              color: textColor,
+                                              fontFamily: 'Helvetica',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            "${item['city']}, ${item['country']}",
+                                            style: bodyStyle,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.edit,
+                                            color: textColor,
+                                          ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (_) =>
+                                                        AddAccommodationScreen(
+                                                          accommodation: item,
+                                                        ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.delete,
+                                            color: textColor,
+                                          ),
+                                          onPressed:
+                                              () => _deleteAccommodation(
+                                                item['aid'],
                                               ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.delete, color: iconColor),
-                                    onPressed:
-                                        () => _deleteAccommodation(item['aid']),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        } else {
+                          return ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: myAccommodations.length,
+                            itemBuilder: (context, index) {
+                              final item = myAccommodations[index];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          isDark
+                                              ? Colors.black26
+                                              : Colors.black12,
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: _buildImage(
+                                        item['aid'],
+                                        textColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item['name'],
+                                            style: TextStyle(
+                                              fontSize: bigText ? 18 : 16,
+                                              fontWeight:
+                                                  bigText
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                              color: textColor,
+                                              fontFamily: 'Helvetica',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            "${item['city']}, ${item['country']}",
+                                            style: bodyStyle,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.edit,
+                                            color: textColor,
+                                          ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (_) =>
+                                                        AddAccommodationScreen(
+                                                          accommodation: item,
+                                                        ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.delete,
+                                            color: textColor,
+                                          ),
+                                          onPressed:
+                                              () => _deleteAccommodation(
+                                                item['aid'],
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        }
                       },
                     ),
           ),
@@ -205,8 +341,13 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                backgroundColor:
+                    highContrast
+                        ? (isDark
+                            ? AppColors.color1DarkHigh
+                            : AppColors.color1High)
+                        : (isDark ? AppColors.color1 : AppColors.color1),
+                padding: EdgeInsets.symmetric(vertical: bigText ? 16 : 14),
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -220,11 +361,20 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                   ),
                 );
               },
-              child: const Text(
+              child: Text(
                 "Add Accommodation",
                 style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  color:
+                      highContrast
+                          ? (isDark
+                              ? AppColors.colorButtonTextDarkHigh
+                              : AppColors.colorButtonTextHigh)
+                          : (isDark
+                              ? AppColors.colorButtonTextDark
+                              : AppColors.colorButtonText),
+                  fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                  fontSize: bigText ? 18 : 16,
+                  fontFamily: 'Helvetica',
                 ),
               ),
             ),

@@ -9,11 +9,13 @@ import 'main_screen_accommodations.dart';
 import 'register.dart';
 import 'server_config.dart';
 import 'app_settings.dart';
+import 'accessibility_buttons.dart';
 
 String? globalToken;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => AppSettings(),
@@ -26,19 +28,27 @@ class RoomFinderApp extends StatelessWidget {
   const RoomFinderApp({super.key});
 
   @override
-  Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
-    value: SystemUiOverlayStyle(
-      statusBarBrightness: Brightness.dark,
-      statusBarIconBrightness: Brightness.light,
-    ),
-    child: MaterialApp(
+  Widget build(BuildContext context) {
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.light(useMaterial3: true),
       darkTheme: ThemeData.dark(useMaterial3: true),
       themeMode: ThemeMode.system,
       home: const LoginScreen(),
-    ),
-  );
+      builder: (context, child) {
+        final brightness = MediaQuery.of(context).platformBrightness;
+        final overlayStyle =
+            brightness == Brightness.dark
+                ? SystemUiOverlayStyle.light
+                : SystemUiOverlayStyle.dark;
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: overlayStyle,
+          child: child!,
+        );
+      },
+    );
+  }
 }
 
 class LoginScreen extends StatelessWidget {
@@ -49,12 +59,10 @@ class LoginScreen extends StatelessWidget {
     return AdaptiveLayout(
       body: SlotLayout(
         config: <Breakpoint, SlotLayoutConfig>{
-          // Handsets: one column, small logo above the form
           Breakpoints.small: SlotLayout.from(
             key: const Key('phone-layout'),
             builder: (_) => const _PhoneLogin(),
           ),
-          // Tablets / desktops: two-pane layout; no second logo
           Breakpoints.medium: SlotLayout.from(
             key: const Key('tablet-layout'),
             builder: (_) => const _TabletLogin(),
@@ -65,7 +73,6 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-/// Phone / narrow layout (single column)
 class _PhoneLogin extends StatelessWidget {
   const _PhoneLogin();
 
@@ -75,7 +82,6 @@ class _PhoneLogin extends StatelessWidget {
   );
 }
 
-/// Tablet / wide layout (logo left, form right)
 class _TabletLogin extends StatelessWidget {
   const _TabletLogin();
 
@@ -83,7 +89,6 @@ class _TabletLogin extends StatelessWidget {
   Widget build(BuildContext context) => _ScaffoldWrapper(
     child: Row(
       children: [
-        // big logo pane
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(40),
@@ -95,7 +100,6 @@ class _TabletLogin extends StatelessWidget {
             ),
           ),
         ),
-        // form pane (no duplicate logo)
         const Expanded(
           child: Center(child: _LoginForm(maxWidth: 420, showTopLogo: false)),
         ),
@@ -104,28 +108,38 @@ class _TabletLogin extends StatelessWidget {
   );
 }
 
-/// Adds SafeArea + scroll + some padding
 class _ScaffoldWrapper extends StatelessWidget {
   const _ScaffoldWrapper({required this.child});
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: LayoutBuilder(
-        builder:
-            (context, constraints) => SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 40,
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
+    final bg =
+        highContrast
+            ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+            : (isDark ? AppColors.colorBgDark : AppColors.colorBg);
+
+    return Scaffold(
+      backgroundColor: bg,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder:
+              (context, constraints) => SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight - 40,
+                  ),
+                  child: child,
                 ),
-                child: child,
               ),
-            ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _LoginForm extends StatefulWidget {
@@ -191,15 +205,23 @@ class _LoginFormState extends State<_LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    // Settings coming from Provider
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
+    final bigText = settings.bigText;
 
-    // TextStyle you requested for the Login label
-    final loginLabelStyle = TextStyle(
-      fontSize: 16,
-      color: isDark ? AppColors.colorTextDark : AppColors.colorTextDarkHigh,
+    final buttonTextStyle = TextStyle(
+      fontSize: bigText ? 20 : 16,
+      color:
+          highContrast
+              ? (isDark
+                  ? AppColors.colorButtonTextDarkHigh
+                  : AppColors.colorButtonTextHigh)
+              : (isDark
+                  ? AppColors.colorButtonTextDark
+                  : AppColors.colorButtonText),
       fontFamily: 'Helvetica',
-      fontWeight: FontWeight.normal,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
     );
 
     return Center(
@@ -218,28 +240,68 @@ class _LoginFormState extends State<_LoginForm> {
                   fit: BoxFit.contain,
                 ),
               ),
-
             _ShadowBox(
               child: TextField(
                 controller: _email,
+                style: TextStyle(
+                  color:
+                      highContrast
+                          ? (isDark
+                              ? AppColors.colorTextDarkHigh
+                              : AppColors.colorTextHigh)
+                          : (isDark
+                              ? AppColors.colorTextDark
+                              : AppColors.colorText),
+                  fontSize: bigText ? 18 : 14,
+                ),
                 decoration: _inputDecoration(
                   context,
                   hint: 'Email',
-                  errorText: _emailError ? _emailErrorMsg : null,
+                  errorText: null,
                 ),
               ),
             ),
+            if (_emailError)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _emailErrorMsg!,
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color:
+                          highContrast
+                              ? AppColors.color1High
+                              : AppColors.color1,
+                      fontWeight:
+                          highContrast ? FontWeight.bold : FontWeight.normal,
+                      fontFamily: 'Helvetica',
+                      fontSize: bigText ? 18 : 14,
+                    ),
+                  ),
+                ),
+              ),
             const SizedBox(height: 10),
-
             _ShadowBox(
               child: TextField(
                 controller: _password,
                 obscureText: _obscure,
+                style: TextStyle(
+                  color:
+                      highContrast
+                          ? (isDark
+                              ? AppColors.colorTextDarkHigh
+                              : AppColors.colorTextHigh)
+                          : (isDark
+                              ? AppColors.colorTextDark
+                              : AppColors.colorText),
+                  fontSize: bigText ? 18 : 14,
+                ),
                 decoration: _inputDecoration(
                   context,
                   hint: 'Password',
-                  errorText:
-                      _passwordError ? 'This text field cannot be empty' : null,
+                  errorText: null,
                 ).copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -250,30 +312,55 @@ class _LoginFormState extends State<_LoginForm> {
                 ),
               ),
             ),
+            if (_passwordError)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'This text field cannot be empty',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color:
+                          highContrast
+                              ? AppColors.color1High
+                              : AppColors.color1,
+                      fontWeight:
+                          highContrast ? FontWeight.bold : FontWeight.normal,
+                      fontFamily: 'Helvetica',
+                      fontSize: bigText ? 18 : 14,
+                    ),
+                  ),
+                ),
+              ),
             const SizedBox(height: 20),
-
             _ShadowBox(
               child: SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red[400],
+                    backgroundColor:
+                        highContrast
+                            ? (isDark
+                                ? AppColors.color1DarkHigh
+                                : AppColors.color1High)
+                            : (isDark
+                                ? AppColors.color1Dark
+                                : AppColors.color1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   onPressed: _login,
-                  child: Text('Login', style: loginLabelStyle),
+                  child: Text('Login', style: buttonTextStyle),
                 ),
               ),
             ),
-
             if (_loginErrorMsg != null) ...[
               const SizedBox(height: 10),
               Text(_loginErrorMsg!, style: const TextStyle(color: Colors.red)),
             ],
-
             TextButton(
               onPressed:
                   () => Navigator.push(
@@ -289,13 +376,13 @@ class _LoginFormState extends State<_LoginForm> {
                 ),
               ),
             ),
+            const AccessibilityButtons(),
           ],
         ),
       ),
     );
   }
 
-  // helper for consistent decoration
   InputDecoration _inputDecoration(
     BuildContext ctx, {
     required String hint,
@@ -304,10 +391,10 @@ class _LoginFormState extends State<_LoginForm> {
     final isDark = Theme.of(ctx).brightness == Brightness.dark;
     return InputDecoration(
       filled: true,
-      fillColor: isDark ? Colors.grey[800] : Colors.grey[300],
+      fillColor: isDark ? AppColors.colorInputBgDark : AppColors.colorInputBg,
       hintText: hint,
       hintStyle: TextStyle(
-        color: isDark ? Colors.white70 : Colors.black54,
+        color: isDark ? AppColors.colorHintDark : AppColors.colorHint,
         fontFamily: 'Helvetica',
       ),
       border: OutlineInputBorder(
@@ -323,15 +410,14 @@ class _LoginFormState extends State<_LoginForm> {
   }
 }
 
-/// Re-usable container with drop shadow (so code above stays clean)
 class _ShadowBox extends StatelessWidget {
   const _ShadowBox({required this.child});
   final Widget child;
 
   @override
   Widget build(BuildContext context) => Container(
-    height: 55,
-    margin: const EdgeInsets.only(bottom: 5),
+    constraints: const BoxConstraints(minHeight: 55),
+    margin: const EdgeInsets.only(bottom: 10),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(10),
       boxShadow: const [

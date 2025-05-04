@@ -1,8 +1,8 @@
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'search_results_screen.dart';
 import 'main.dart';
@@ -105,7 +105,6 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
               color: CupertinoColors.systemBackground.resolveFrom(context),
               child: Column(
                 children: [
-                  // Done button
                   Container(
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(
@@ -158,353 +157,801 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
       backgroundColor: backgroundColor,
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // Location + "use my location" row
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: locationController,
-                        style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium!.color,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth > 600) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: SizedBox(
+                    width: constraints.maxWidth * 0.8,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: locationController,
+                                        style: TextStyle(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).textTheme.bodyMedium!.color,
+                                        ),
+                                        decoration: InputDecoration(
+                                          prefixIcon: Icon(
+                                            Icons.location_on_outlined,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).textTheme.bodyMedium!.color,
+                                          ),
+                                          hintText: 'Location',
+                                          hintStyle: TextStyle(
+                                            fontSize: bigText ? 24 : 18,
+                                            color:
+                                                highContrast
+                                                    ? (isDark
+                                                        ? AppColors
+                                                            .colorTextDarkHigh
+                                                        : AppColors
+                                                            .colorTextHigh)
+                                                    : (isDark
+                                                        ? AppColors
+                                                            .colorTextDark
+                                                        : AppColors.colorText),
+                                            fontFamily: 'Helvetica',
+                                            fontWeight:
+                                                bigText
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                          ),
+                                          filled: true,
+                                          fillColor:
+                                              isDark
+                                                  ? Colors.grey[800]
+                                                  : const Color.fromARGB(
+                                                    255,
+                                                    224,
+                                                    224,
+                                                    224,
+                                                  ),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.my_location,
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium!.color,
+                                      ),
+                                      tooltip: 'Use my location',
+                                      onPressed: () async {
+                                        LocationPermission permission =
+                                            await Geolocator.checkPermission();
+                                        if (permission ==
+                                            LocationPermission.denied) {
+                                          permission =
+                                              await Geolocator.requestPermission();
+                                          if (permission ==
+                                              LocationPermission.denied) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Location permission was denied.',
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+                                        }
+                                        if (permission ==
+                                            LocationPermission.deniedForever) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Location permission is permanently denied. Please enable it in settings.',
+                                              ),
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        final position =
+                                            await Geolocator.getCurrentPosition(
+                                              locationSettings:
+                                                  const LocationSettings(
+                                                    accuracy:
+                                                        LocationAccuracy.medium,
+                                                  ),
+                                            );
+                                        final response = await http.post(
+                                          Uri.parse(
+                                            'http://$serverIp:$serverPort/get-address',
+                                          ),
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                            if (jwtToken != null)
+                                              'Authorization':
+                                                  'Bearer $jwtToken',
+                                          },
+                                          body: jsonEncode({
+                                            'latitude': position.latitude,
+                                            'longitude': position.longitude,
+                                          }),
+                                        );
+                                        if (response.statusCode == 200) {
+                                          final data = jsonDecode(
+                                            response.body,
+                                          );
+                                          setState(() {
+                                            locationController.text =
+                                                data['address'];
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              _buildDateField(isDark),
+                              _buildInputField(
+                                controller: guestController,
+                                icon: Icons.group_outlined,
+                                hint: 'Guests',
+                                keyboardType: TextInputType.number,
+                                isDark: isDark,
+                              ),
+                              const SizedBox(height: 10),
+                              ElevatedButton(
+                                onPressed: () {
+                                  final from = dateFromNotifier.value;
+                                  final to = dateToNotifier.value;
+                                  final loc = locationController.text;
+                                  final guestsText = guestController.text;
+                                  if (loc.isEmpty ||
+                                      guestsText.isEmpty ||
+                                      from == null ||
+                                      to == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Please fill in location, dates, and guest count.',
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  if (to.isBefore(from)) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'End date cant be before start date.',
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) => SearchResultsScreen(
+                                            location: loc,
+                                            dateFrom: from,
+                                            dateTo: to,
+                                            guests: int.parse(guestsText),
+                                          ),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      highContrast
+                                          ? (isDark
+                                              ? AppColors.color1DarkHigh
+                                              : AppColors.color1High)
+                                          : (isDark
+                                              ? AppColors.color1Dark
+                                              : AppColors.color1),
+                                  minimumSize: const Size(double.infinity, 50),
+                                ),
+                                child: Text(
+                                  "Search",
+                                  style: TextStyle(
+                                    fontSize: bigText ? 24 : 18,
+                                    fontWeight:
+                                        bigText
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                    color:
+                                        highContrast
+                                            ? AppColors.colorTextDarkHigh
+                                            : AppColors.colorTextDark,
+                                    fontFamily: 'Helvetica',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(
-                            Icons.location_on_outlined,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 20),
+                              if (accommodations.isEmpty)
+                                Text(
+                                  "No accommodations available.",
+                                  style: TextStyle(
+                                    fontSize: bigText ? 20 : 16,
+                                    fontWeight:
+                                        bigText
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                    color:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium!.color,
+                                  ),
+                                )
+                              else
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: accommodations.length,
+                                  itemBuilder: (context, index) {
+                                    final item = accommodations[index];
+                                    final isLiked = item['is_liked'] ?? false;
+                                    return FutureBuilder<Uint8List?>(
+                                      future: fetchAccommodationImage(
+                                        item['aid'],
+                                      ),
+                                      builder: (context, snapshot) {
+                                        Widget imageWidget;
+                                        if (snapshot.connectionState ==
+                                                ConnectionState.done &&
+                                            snapshot.hasData) {
+                                          imageWidget = Image.memory(
+                                            snapshot.data!,
+                                            fit: BoxFit.cover,
+                                            height: 180,
+                                            width: double.infinity,
+                                          );
+                                        } else if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
+                                          imageWidget = const SizedBox(
+                                            height: 180,
+                                            child: Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            ),
+                                          );
+                                        } else {
+                                          imageWidget = const SizedBox(
+                                            height: 180,
+                                            child: Placeholder(),
+                                          );
+                                        }
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (_) =>
+                                                        AccommodationDetailScreen(
+                                                          aid: item['aid'],
+                                                        ),
+                                              ),
+                                            );
+                                          },
+                                          child: Card(
+                                            margin: const EdgeInsets.only(
+                                              bottom: 16,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius:
+                                                      const BorderRadius.vertical(
+                                                        top: Radius.circular(
+                                                          10,
+                                                        ),
+                                                      ),
+                                                  child: imageWidget,
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    12,
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            item['location'],
+                                                            style: TextStyle(
+                                                              fontSize:
+                                                                  bigText
+                                                                      ? 24
+                                                                      : 18,
+                                                              fontWeight:
+                                                                  bigText
+                                                                      ? FontWeight
+                                                                          .bold
+                                                                      : FontWeight
+                                                                          .normal,
+                                                              color:
+                                                                  highContrast
+                                                                      ? (isDark
+                                                                          ? AppColors
+                                                                              .colorTextDarkHigh
+                                                                          : AppColors
+                                                                              .colorTextHigh)
+                                                                      : (isDark
+                                                                          ? AppColors
+                                                                              .colorTextDark
+                                                                          : AppColors
+                                                                              .colorText),
+                                                              fontFamily:
+                                                                  'Helvetica',
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 4,
+                                                          ),
+                                                          Text(
+                                                            '${item['price_per_night']} € / Night',
+                                                            style: TextStyle(
+                                                              fontSize:
+                                                                  bigText
+                                                                      ? 20
+                                                                      : 16,
+                                                              fontWeight:
+                                                                  bigText
+                                                                      ? FontWeight
+                                                                          .bold
+                                                                      : FontWeight
+                                                                          .normal,
+                                                              color:
+                                                                  highContrast
+                                                                      ? (isDark
+                                                                          ? AppColors
+                                                                              .colorTextDarkHigh
+                                                                          : AppColors
+                                                                              .colorTextHigh)
+                                                                      : (isDark
+                                                                          ? AppColors
+                                                                              .colorTextDark
+                                                                          : AppColors
+                                                                              .colorText),
+                                                              fontFamily:
+                                                                  'Helvetica',
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      IconButton(
+                                                        icon: Icon(
+                                                          isLiked
+                                                              ? Icons.favorite
+                                                              : Icons
+                                                                  .favorite_border,
+                                                          color:
+                                                              isLiked
+                                                                  ? Colors.red
+                                                                  : (isDark
+                                                                      ? Colors
+                                                                          .white
+                                                                      : Colors
+                                                                          .black),
+                                                        ),
+                                                        onPressed:
+                                                            () => toggleLike(
+                                                              item['aid'],
+                                                              index,
+                                                            ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: locationController,
+                            style: TextStyle(
+                              color:
+                                  Theme.of(context).textTheme.bodyMedium!.color,
+                            ),
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.location_on_outlined,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium!.color,
+                              ),
+                              hintText: 'Location',
+                              hintStyle: TextStyle(
+                                fontSize: bigText ? 24 : 18,
+                                color:
+                                    highContrast
+                                        ? (isDark
+                                            ? AppColors.colorTextDarkHigh
+                                            : AppColors.colorTextHigh)
+                                        : (isDark
+                                            ? AppColors.colorTextDark
+                                            : AppColors.colorText),
+                                fontFamily: 'Helvetica',
+                                fontWeight:
+                                    bigText
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                              ),
+                              filled: true,
+                              fillColor:
+                                  isDark
+                                      ? AppColors.colorInputBgDark
+                                      : AppColors.colorInputBg,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(
+                            Icons.my_location,
                             color:
                                 Theme.of(context).textTheme.bodyMedium!.color,
                           ),
-                          hintText: 'Location',
-                          hintStyle: TextStyle(
-                            fontSize: bigText ? 24 : 18,
-                            color:
-                                highContrast
-                                    ? (isDark
-                                        ? AppColors.colorTextDarkHigh
-                                        : AppColors.colorTextHigh)
-                                    : (isDark
-                                        ? AppColors.colorTextDark
-                                        : AppColors.colorText),
-                            fontFamily: 'Helvetica',
-                            fontWeight:
-                                bigText ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          filled: true,
-                          fillColor:
-                              isDark
-                                  ? Colors.grey[800]
-                                  : const Color.fromARGB(255, 199, 199, 199),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
+                          tooltip: 'Use my location',
+                          onPressed: () async {
+                            LocationPermission permission =
+                                await Geolocator.checkPermission();
+                            if (permission == LocationPermission.denied) {
+                              permission = await Geolocator.requestPermission();
+                              if (permission == LocationPermission.denied) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Location permission was denied.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                            }
+                            if (permission ==
+                                LocationPermission.deniedForever) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Location permission is permanently denied. Please enable it in settings.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            final position =
+                                await Geolocator.getCurrentPosition(
+                                  locationSettings: const LocationSettings(
+                                    accuracy: LocationAccuracy.medium,
+                                  ),
+                                );
+                            final response = await http.post(
+                              Uri.parse(
+                                'http://$serverIp:$serverPort/get-address',
+                              ),
+                              headers: {
+                                'Content-Type': 'application/json',
+                                if (jwtToken != null)
+                                  'Authorization': 'Bearer $jwtToken',
+                              },
+                              body: jsonEncode({
+                                'latitude': position.latitude,
+                                'longitude': position.longitude,
+                              }),
+                            );
+                            if (response.statusCode == 200) {
+                              final data = jsonDecode(response.body);
+                              setState(() {
+                                locationController.text = data['address'];
+                              });
+                            }
+                          },
                         ),
+                      ],
+                    ),
+                  ),
+                  _buildDateField(isDark),
+                  _buildInputField(
+                    controller: guestController,
+                    icon: Icons.group_outlined,
+                    hint: 'Guests',
+                    keyboardType: TextInputType.number,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      final from = dateFromNotifier.value;
+                      final to = dateToNotifier.value;
+                      final loc = locationController.text;
+                      final guestsText = guestController.text;
+                      if (loc.isEmpty ||
+                          guestsText.isEmpty ||
+                          from == null ||
+                          to == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Please fill in location, dates, and guest count.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      if (to.isBefore(from)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'End date cant be before start date.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => SearchResultsScreen(
+                                location: loc,
+                                dateFrom: from,
+                                dateTo: to,
+                                guests: int.parse(guestsText),
+                              ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          highContrast
+                              ? (isDark
+                                  ? AppColors.color1DarkHigh
+                                  : AppColors.color1High)
+                              : (isDark
+                                  ? AppColors.color1Dark
+                                  : AppColors.color1),
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: Text(
+                      "Search",
+                      style: TextStyle(
+                        fontSize: bigText ? 24 : 18,
+                        fontWeight:
+                            bigText ? FontWeight.bold : FontWeight.normal,
+                        color:
+                            highContrast
+                                ? AppColors.colorTextDarkHigh
+                                : AppColors.colorTextDark,
+                        fontFamily: 'Helvetica',
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: Icon(
-                        Icons.my_location,
+                  ),
+                  const SizedBox(height: 20),
+                  if (accommodations.isEmpty)
+                    Text(
+                      "No accommodations available.",
+                      style: TextStyle(
+                        fontSize: 16,
                         color: Theme.of(context).textTheme.bodyMedium!.color,
                       ),
-                      tooltip: 'Use my location',
-                      onPressed: () async {
-                        LocationPermission permission =
-                            await Geolocator.checkPermission();
-                        if (permission == LocationPermission.denied) {
-                          permission = await Geolocator.requestPermission();
-                          if (permission == LocationPermission.denied) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Location permission was denied.',
+                    )
+                  else
+                    ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: accommodations.length,
+                      itemBuilder: (context, index) {
+                        final item = accommodations[index];
+                        final isLiked = item['is_liked'] ?? false;
+                        return FutureBuilder<Uint8List?>(
+                          future: fetchAccommodationImage(item['aid']),
+                          builder: (context, snapshot) {
+                            Widget imageWidget;
+                            if (snapshot.connectionState ==
+                                    ConnectionState.done &&
+                                snapshot.hasData) {
+                              imageWidget = Image.memory(
+                                snapshot.data!,
+                                fit: BoxFit.cover,
+                                height: 180,
+                                width: double.infinity,
+                              );
+                            } else if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              imageWidget = const SizedBox(
+                                height: 180,
+                                child: Center(
+                                  child: CircularProgressIndicator(),
                                 ),
-                              ),
-                            );
-                            return;
-                          }
-                        }
-                        if (permission == LocationPermission.deniedForever) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Location permission is permanently denied. Please enable it in settings.',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-                        final position = await Geolocator.getCurrentPosition(
-                          locationSettings: const LocationSettings(
-                            accuracy: LocationAccuracy.medium,
-                          ),
-                        );
-                        final response = await http.post(
-                          Uri.parse('http://$serverIp:$serverPort/get-address'),
-                          headers: {
-                            'Content-Type': 'application/json',
-                            if (jwtToken != null)
-                              'Authorization': 'Bearer $jwtToken',
-                          },
-                          body: jsonEncode({
-                            'latitude': position.latitude,
-                            'longitude': position.longitude,
-                          }),
-                        );
-                        if (response.statusCode == 200) {
-                          final data = jsonDecode(response.body);
-                          setState(() {
-                            locationController.text = data['address'];
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              // Date pickers
-              _buildDateField(isDark),
-
-              // Guests
-              _buildInputField(
-                controller: guestController,
-                icon: Icons.group_outlined,
-                hint: 'Guests',
-                keyboardType: TextInputType.number,
-                isDark: isDark,
-              ),
-
-              const SizedBox(height: 10),
-
-              // Search button with validation
-              ElevatedButton(
-                onPressed: () {
-                  final from = dateFromNotifier.value;
-                  final to = dateToNotifier.value;
-                  final loc = locationController.text;
-                  final guestsText = guestController.text;
-
-                  if (loc.isEmpty ||
-                      guestsText.isEmpty ||
-                      from == null ||
-                      to == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Please fill in location, dates, and guest count.',
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-
-                  if (to.isBefore(from)) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('End date cant be before start date.'),
-                      ),
-                    );
-                    return;
-                  }
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => SearchResultsScreen(
-                            location: loc,
-                            dateFrom: from,
-                            dateTo: to,
-                            guests: int.parse(guestsText),
-                          ),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      highContrast
-                          ? (isDark
-                              ? AppColors.color1DarkHigh
-                              : AppColors.color1High)
-                          : (isDark ? AppColors.color1Dark : AppColors.color1),
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                child: Text(
-                  "Search",
-                  style: TextStyle(
-                    fontSize: bigText ? 24 : 18,
-                    fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
-                    color:
-                        highContrast
-                            ? AppColors.colorTextDarkHigh
-                            : AppColors.colorTextDark,
-                    fontFamily: 'Helvetica',
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Recommendations list
-              if (accommodations.isEmpty)
-                Text(
-                  "No accommodations available.",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).textTheme.bodyMedium!.color,
-                  ),
-                )
-              else
-                ListView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: accommodations.length,
-                  itemBuilder: (context, index) {
-                    final item = accommodations[index];
-                    final isLiked = item['is_liked'] ?? false;
-
-                    return FutureBuilder<Uint8List?>(
-                      future: fetchAccommodationImage(item['aid']),
-                      builder: (context, snapshot) {
-                        Widget imageWidget;
-                        if (snapshot.connectionState == ConnectionState.done &&
-                            snapshot.hasData) {
-                          imageWidget = Image.memory(
-                            snapshot.data!,
-                            fit: BoxFit.cover,
-                            height: 180,
-                            width: double.infinity,
-                          );
-                        } else if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          imageWidget = const SizedBox(
-                            height: 180,
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        } else {
-                          imageWidget = const SizedBox(
-                            height: 180,
-                            child: Placeholder(),
-                          );
-                        }
-
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (_) => AccommodationDetailScreen(
-                                      aid: item['aid'],
-                                    ),
-                              ),
-                            );
-                          },
-                          child: Card(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(10),
+                              );
+                            } else {
+                              imageWidget = const SizedBox(
+                                height: 180,
+                                child: Placeholder(),
+                              );
+                            }
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (_) => AccommodationDetailScreen(
+                                          aid: item['aid'],
+                                        ),
                                   ),
-                                  child: imageWidget,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                );
+                              },
+                              child: Card(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(10),
+                                      ),
+                                      child: imageWidget,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            item['location'],
-                                            style: TextStyle(
-                                              fontSize: bigText ? 24 : 18,
-                                              fontWeight:
-                                                  bigText
-                                                      ? FontWeight.bold
-                                                      : FontWeight.normal,
-                                              color:
-                                                  highContrast
-                                                      ? (isDark
-                                                          ? AppColors
-                                                              .colorTextDarkHigh
-                                                          : AppColors
-                                                              .colorTextHigh)
-                                                      : (isDark
-                                                          ? AppColors
-                                                              .colorTextDark
-                                                          : AppColors
-                                                              .colorText),
-                                              fontFamily: 'Helvetica',
-                                            ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item['location'],
+                                                style: TextStyle(
+                                                  fontSize: bigText ? 24 : 18,
+                                                  fontWeight:
+                                                      bigText
+                                                          ? FontWeight.bold
+                                                          : FontWeight.normal,
+                                                  color:
+                                                      highContrast
+                                                          ? (isDark
+                                                              ? AppColors
+                                                                  .colorTextDarkHigh
+                                                              : AppColors
+                                                                  .colorTextHigh)
+                                                          : (isDark
+                                                              ? AppColors
+                                                                  .colorTextDark
+                                                              : AppColors
+                                                                  .colorText),
+                                                  fontFamily: 'Helvetica',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                '${item['price_per_night']} € / Night',
+                                                style: TextStyle(
+                                                  fontSize: bigText ? 20 : 16,
+                                                  fontWeight:
+                                                      bigText
+                                                          ? FontWeight.bold
+                                                          : FontWeight.normal,
+                                                  color:
+                                                      highContrast
+                                                          ? (isDark
+                                                              ? AppColors
+                                                                  .colorTextDarkHigh
+                                                              : AppColors
+                                                                  .colorTextHigh)
+                                                          : (isDark
+                                                              ? AppColors
+                                                                  .colorTextDark
+                                                              : AppColors
+                                                                  .colorText),
+                                                  fontFamily: 'Helvetica',
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '${item['price_per_night']} € / Night',
-                                            style: TextStyle(
-                                              fontSize: bigText ? 20 : 16,
-                                              fontWeight:
-                                                  bigText
-                                                      ? FontWeight.bold
-                                                      : FontWeight.normal,
+                                          IconButton(
+                                            icon: Icon(
+                                              isLiked
+                                                  ? Icons.favorite
+                                                  : Icons.favorite_border,
                                               color:
-                                                  highContrast
-                                                      ? (isDark
-                                                          ? AppColors
-                                                              .colorTextDarkHigh
-                                                          : AppColors
-                                                              .colorTextHigh)
+                                                  isLiked
+                                                      ? Colors.red
                                                       : (isDark
-                                                          ? AppColors
-                                                              .colorTextDark
-                                                          : AppColors
-                                                              .colorText),
-                                              fontFamily: 'Helvetica',
+                                                          ? Colors.white
+                                                          : Colors.black),
                                             ),
+                                            onPressed:
+                                                () => toggleLike(
+                                                  item['aid'],
+                                                  index,
+                                                ),
                                           ),
                                         ],
                                       ),
-                                      IconButton(
-                                        icon: Icon(
-                                          isLiked
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          color:
-                                              isLiked
-                                                  ? Colors.red
-                                                  : (isDark
-                                                      ? Colors.white
-                                                      : Colors.black),
-                                        ),
-                                        onPressed:
-                                            () =>
-                                                toggleLike(item['aid'], index),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                ),
-            ],
-          ),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -517,6 +964,8 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
     required bool isDark,
     TextInputType keyboardType = TextInputType.text,
   }) {
+    final bigText = context.watch<AppSettings>().bigText;
+    final highContrast = context.watch<AppSettings>().highContrast;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextField(
@@ -530,7 +979,15 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
           ),
           hintText: hint,
           hintStyle: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium!.color,
+            fontSize: bigText ? 24 : 18,
+            color:
+                highContrast
+                    ? (isDark
+                        ? AppColors.colorTextDarkHigh
+                        : AppColors.colorTextHigh)
+                    : (isDark ? AppColors.colorTextDark : AppColors.colorText),
+            fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+            fontFamily: 'Helvetica',
           ),
           filled: true,
           fillColor: isDark ? Colors.grey[800] : Colors.grey[300],
@@ -548,7 +1005,6 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
       children: [
         Row(
           children: [
-            // From
             Expanded(
               child: ValueListenableBuilder<DateTime?>(
                 valueListenable: dateFromNotifier,
@@ -558,7 +1014,6 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                         dateFrom == null
                             ? 'from'
                             : DateFormat.yMMMMd().format(dateFrom),
-                    isDark: isDark,
                     context: context,
                     onTap: () {
                       final now = DateTime.now();
@@ -575,10 +1030,7 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                 },
               ),
             ),
-
             const SizedBox(width: 10),
-
-            // To
             Expanded(
               child: ValueListenableBuilder<DateTime?>(
                 valueListenable: dateToNotifier,
@@ -588,7 +1040,6 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                         dateTo == null
                             ? 'to'
                             : DateFormat.yMMMMd().format(dateTo),
-                    isDark: isDark,
                     context: context,
                     onTap: () {
                       if (dateFromNotifier.value == null) {
@@ -625,9 +1076,11 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
   Widget _buildDateTile({
     required String label,
     required VoidCallback onTap,
-    required bool isDark,
     required BuildContext context,
   }) {
+    final bigText = context.watch<AppSettings>().bigText;
+    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -636,12 +1089,27 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
           color: isDark ? Colors.grey[800] : Colors.grey[300],
           borderRadius: BorderRadius.circular(10),
         ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium!.color,
-          ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.calendar,
+              size: bigText ? 28 : 24,
+              color: Theme.of(context).iconTheme.color,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium!.color,
+                  fontSize: bigText ? 24 : 18,
+                  fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                  fontFamily: 'Helvetica',
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

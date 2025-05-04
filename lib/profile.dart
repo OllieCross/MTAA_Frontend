@@ -113,9 +113,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ? Center(
                             child: Text(
                               "No reservations yet.",
-                              style: TextStyle(color: textColor,
+                              style: TextStyle(
+                                color: textColor,
                                 fontSize: settings.bigText ? 20 : 16,
-                                fontWeight: settings.bigText ? FontWeight.bold : FontWeight.normal,
+                                fontWeight:
+                                    settings.bigText
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                 fontFamily: 'Helvetica',
                               ),
                             ),
@@ -180,11 +184,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       backgroundColor:
                           highContrast
                               ? (isDark
-                                  ? AppColors.color1Dark
-                                  : AppColors.color1)
-                              : (isDark
                                   ? AppColors.color1DarkHigh
-                                  : AppColors.color1High),
+                                  : AppColors.color1High)
+                              : (isDark
+                                  ? AppColors.color1Dark
+                                  : AppColors.color1),
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -206,7 +210,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ? AppColors.colorTextDark
                                 : AppColors.colorTextFieldDarkHigh,
                         fontSize: settings.bigText ? 20 : 16,
-                        fontWeight: settings.bigText ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            settings.bigText
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                         fontFamily: 'Helvetica',
                       ),
                     ),

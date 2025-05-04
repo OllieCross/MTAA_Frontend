@@ -32,6 +32,8 @@
 	<string>We need your location to find accommodations nearby.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
 	<key>UIDeviceFamily</key>
 	<array>
 		<string>1</string>

@@ -70,8 +70,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       fit: BoxFit.cover,
       headers: jwtToken != null ? {'Authorization': 'Bearer $jwtToken'} : {},
       errorBuilder:
-          (context, error, stackTrace) =>
-              const SizedBox(height: 200, child: Placeholder()),
+          (_, __, ___) => const SizedBox(height: 200, child: Placeholder()),
     );
   }
 
@@ -79,34 +78,58 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettings>();
     final highContrast = settings.highContrast;
-    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final bigText = settings.bigText;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final backgroundColor =
         highContrast
-            ? (isDark ? Colors.black : Colors.white)
-            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
-
+            ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+            : (isDark ? AppColors.colorBgDark : AppColors.colorBg);
     final textColor =
         highContrast
-            ? (isDark ? Colors.white : Colors.black)
-            : (isDark ? Colors.white70 : Colors.black87);
-
+            ? (isDark ? AppColors.colorTextDarkHigh : AppColors.colorTextHigh)
+            : (isDark ? AppColors.colorTextDark : AppColors.colorText);
     final cardColor =
         highContrast
-            ? (isDark ? Colors.grey[900] : Colors.white)
-            : (isDark ? Colors.grey[800] : Colors.grey[200]);
+            ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+            : (isDark ? Colors.grey[800]! : Colors.grey[200]!);
+
+    final headerStyle = TextStyle(
+      fontSize: bigText ? 18 : 16,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
+    final subHeaderStyle = TextStyle(
+      fontSize: bigText ? 16 : 14,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor.withOpacity(0.7),
+      fontFamily: 'Helvetica',
+    );
+    final itemTitleStyle = TextStyle(
+      fontSize: bigText ? 18 : 16,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
+    final itemPriceStyle = TextStyle(
+      fontSize: bigText ? 16 : 14,
+      fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+      color: textColor,
+      fontFamily: 'Helvetica',
+    );
 
     final dateRange =
         '${widget.dateFrom.day}.${widget.dateFrom.month}. - ${widget.dateTo.day}.${widget.dateTo.month}.';
-    final header =
+    final headerText =
         '${widget.location[0].toUpperCase()}${widget.location.substring(1)}, ${widget.guests} Guest${widget.guests > 1 ? 's' : ''}';
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('Results'),
+        title: Text('Results', style: headerStyle),
         backgroundColor: backgroundColor,
-        foregroundColor: textColor,
+        foregroundColor: backgroundColor,
         elevation: 0.5,
       ),
       body: Column(
@@ -121,15 +144,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               ),
               child: Column(
                 children: [
-                  Text(
-                    header,
-                    style: TextStyle(fontSize: 16, color: textColor),
-                  ),
+                  Text(headerText, style: headerStyle),
                   const SizedBox(height: 4),
-                  Text(
-                    dateRange,
-                    style: TextStyle(color: textColor.withOpacity(0.7)),
-                  ),
+                  Text(dateRange, style: subHeaderStyle),
                 ],
               ),
             ),
@@ -138,69 +155,135 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             child:
                 results.isEmpty
                     ? Center(
-                      child: Text(
-                        'No results found',
-                        style: TextStyle(color: textColor),
-                      ),
+                      child: Text('No results found', style: itemPriceStyle),
                     )
-                    : ListView.builder(
-                      itemCount: results.length,
-                      padding: const EdgeInsets.all(12),
-                      itemBuilder: (context, index) {
-                        final item = results[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (_) => AccommodationDetailScreen(
-                                      aid: item['aid'],
-                                    ),
-                              ),
-                            );
-                          },
-                          child: Card(
-                            color: cardColor,
-                            margin: const EdgeInsets.only(bottom: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(10),
-                                  ),
-                                  child: _buildImage(item['aid']),
+                    : LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth > 600) {
+                          return GridView.builder(
+                            padding: const EdgeInsets.all(12),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  childAspectRatio: 0.75,
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.all(12),
+                            itemCount: results.length,
+                            itemBuilder: (context, index) {
+                              final item = results[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => AccommodationDetailScreen(
+                                            aid: item['aid'],
+                                          ),
+                                    ),
+                                  );
+                                },
+                                child: Card(
+                                  color: cardColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        item['location'],
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          color: textColor,
-                                        ),
+                                      ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                              top: Radius.circular(10),
+                                            ),
+                                        child: _buildImage(item['aid']),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${item['price_per_night']} € / Night',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: textColor,
+                                      Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item['location'],
+                                              style: itemTitleStyle,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${item['price_per_night']} € / Night',
+                                              style: itemPriceStyle,
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        );
+                              );
+                            },
+                          );
+                        } else {
+                          return ListView.builder(
+                            itemCount: results.length,
+                            padding: const EdgeInsets.all(12),
+                            itemBuilder: (context, index) {
+                              final item = results[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => AccommodationDetailScreen(
+                                            aid: item['aid'],
+                                          ),
+                                    ),
+                                  );
+                                },
+                                child: Card(
+                                  color: cardColor,
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                              top: Radius.circular(10),
+                                            ),
+                                        child: _buildImage(item['aid']),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item['location'],
+                                              style: itemTitleStyle,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${item['price_per_night']} € / Night',
+                                              style: itemPriceStyle,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }
                       },
                     ),
           ),

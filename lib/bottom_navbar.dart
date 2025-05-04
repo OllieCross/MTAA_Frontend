@@ -42,54 +42,70 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettings>();
     final highContrast = settings.highContrast;
-    final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final bigText = settings.bigText;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final backgroundColor =
         highContrast
-            ? (isDark ? Colors.black : Colors.white)
-            : (isDark ? const Color(0xFF121212) : Colors.grey[300]);
-
+            ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+            : (isDark ? AppColors.colorBgDark : AppColors.colorBg);
     final selectedColor =
         highContrast
-            ? (isDark ? Colors.white : Colors.black)
-            : (isDark ? Colors.white : Colors.black);
-
+            ? (isDark ? AppColors.color1DarkHigh : AppColors.color1High)
+            : (isDark ? AppColors.color1Dark : AppColors.color1);
     final unselectedColor =
         highContrast
-            ? (isDark ? Colors.grey[500]! : Colors.grey[700]!)
-            : (isDark ? Colors.white70 : Colors.grey);
+            ? (isDark ? AppColors.colorTextDarkHigh : AppColors.colorTextHigh)
+            : (isDark ? AppColors.colorTextDark : AppColors.colorText);
+    final borderColor =
+        highContrast
+            ? (isDark ? AppColors.colorHintDarkHigh : AppColors.colorHintHigh)
+            : (isDark ? AppColors.colorHintDark : AppColors.colorHint);
 
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: (index) => _onTap(context, index),
-      selectedItemColor: selectedColor,
-      unselectedItemColor: unselectedColor,
-      backgroundColor: backgroundColor,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
-      items: [
-        BottomNavigationBarItem(
-          icon: ImageIcon(
-            const AssetImage('assets/lupa.png'),
-            color: currentIndex == 0 ? selectedColor : unselectedColor,
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final iconOffset = bottomInset / 2;
+    final iconSize = bigText ? 32.0 : 24.0;
+
+    Widget _navIcon(String asset, Color color) {
+      return Padding(
+        padding: EdgeInsets.only(top: iconOffset),
+        child: ImageIcon(AssetImage(asset), color: color, size: iconSize),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(width: 1.0, color: borderColor)),
+      ),
+      child: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (i) => _onTap(context, i),
+        backgroundColor: backgroundColor,
+        selectedItemColor: selectedColor,
+        unselectedItemColor: unselectedColor,
+        iconSize: iconSize,
+        selectedLabelStyle: TextStyle(fontSize: bigText ? 14 : 12),
+        unselectedLabelStyle: TextStyle(fontSize: bigText ? 14 : 12),
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        items: [
+          BottomNavigationBarItem(
+            icon: _navIcon('assets/lupa.png', unselectedColor),
+            activeIcon: _navIcon('assets/lupa.png', selectedColor),
+            label: 'search',
           ),
-          label: 'search',
-        ),
-        BottomNavigationBarItem(
-          icon: ImageIcon(
-            const AssetImage('assets/heart.png'),
-            color: currentIndex == 1 ? selectedColor : unselectedColor,
+          BottomNavigationBarItem(
+            icon: _navIcon('assets/heart.png', unselectedColor),
+            activeIcon: _navIcon('assets/heart.png', selectedColor),
+            label: 'liked',
           ),
-          label: 'liked',
-        ),
-        BottomNavigationBarItem(
-          icon: ImageIcon(
-            const AssetImage('assets/user.png'),
-            color: currentIndex == 2 ? selectedColor : unselectedColor,
+          BottomNavigationBarItem(
+            icon: _navIcon('assets/user.png', unselectedColor),
+            activeIcon: _navIcon('assets/user.png', selectedColor),
+            label: 'profile',
           ),
-          label: 'profile',
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

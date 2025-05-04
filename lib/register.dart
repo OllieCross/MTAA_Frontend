@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'server_config.dart';
 import 'register_succesful.dart';
 import 'app_settings.dart';
+import 'package:provider/provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -21,13 +22,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscurePassword2 = true;
 
-  // Inline error messages
   String? _emailErrorMessage;
   String? _passwordErrorMessage;
   String? _repeatPasswordErrorMessage;
 
   Future<void> _onRegisterPressed() async {
-    // Reset errors first
     if (!mounted) return;
     setState(() {
       _emailErrorMessage = null;
@@ -41,7 +40,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     bool hasError = false;
 
-    // Check empty
     if (email.isEmpty) {
       setState(() => _emailErrorMessage = 'Please enter an email');
       hasError = true;
@@ -57,7 +55,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       hasError = true;
     }
 
-    // Check mismatch
     if (!hasError && password != repeatPassword) {
       setState(() {
         _passwordErrorMessage = ' ';
@@ -66,7 +63,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       hasError = true;
     }
 
-    // If no error, register
     if (!hasError) {
       try {
         final response = await http.post(
@@ -75,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           body: jsonEncode({
             'email': email,
             'password': password,
-            'role': 'guest', // voliteľne, backend má predvolené
+            'role': 'guest',
           }),
         );
 
@@ -83,7 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (!mounted) return;
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => ReigsterSuccesful()),
+            MaterialPageRoute(builder: (_) => RegisterSuccesful()),
           );
         } else {
           final body = jsonDecode(response.body);
@@ -101,159 +97,497 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode =
-        MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final settings = context.watch<AppSettings>();
+    final highContrast = settings.highContrast;
+    final bigText = settings.bigText;
+
+    final bgColor =
+        highContrast
+            ? (isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+            : (isDark ? AppColors.colorBgDark : AppColors.colorBg);
+
     return Scaffold(
-      backgroundColor:
-          isDarkMode ? AppColors.colorBgDark : AppColors.colorBg,
-      appBar: AppBar(
-        backgroundColor:
-            isDarkMode ? AppColors.colorBgDark : AppColors.colorBg,
-      ),
-      body: Center(
-        // Center the content both vertically and horizontally
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30.0),
-            // Column that centers items vertically
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start, // left-align text
-              children: [
-                // TITLE
-                Center(
-                  child: Text(
-                    'Registration',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Helvetica',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-
-                // EMAIL
-                _buildFieldContainer(
-                  child: TextField(
-                    controller: _emailController,
-                    style : const TextStyle(
-                      fontFamily: 'Helvetica',
-                      fontSize: 16,
-                    ),
-                    decoration: _buildInputDecoration(
-                      hintText: 'Email',
-                      hasError: _emailErrorMessage != null,
-                    ),
-                  ),
-                ),
-                if (_emailErrorMessage != null)
-                  _buildErrorMessage(_emailErrorMessage!)
-                else
-                  const SizedBox(height: 15),
-
-                // PASSWORD
-                _buildFieldContainer(
-                  child: TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    style : const TextStyle(
-                      fontFamily: 'Helvetica',
-                      fontSize: 16,
-                    ),
-                    decoration: _buildInputDecoration(
-                      hintText: 'Password',
-                      hasError: _passwordErrorMessage != null,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+      backgroundColor: bgColor,
+      appBar: AppBar(backgroundColor: bgColor, elevation: 0),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 600) {
+            return Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          'Registration',
+                          style: TextStyle(
+                            fontSize: bigText ? 38 : 30,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Helvetica',
+                            color:
+                                highContrast
+                                    ? (isDark
+                                        ? AppColors.colorTextDarkHigh
+                                        : AppColors.colorTextHigh)
+                                    : (isDark
+                                        ? AppColors.colorTextDark
+                                        : AppColors.colorText),
+                          ),
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
                       ),
-                    ),
-                  ),
-                ),
-                if (_passwordErrorMessage != null)
-                  _buildErrorMessage(_passwordErrorMessage!)
-                else
-                  const SizedBox(height: 15),
-
-                // REPEAT PASSWORD
-                _buildFieldContainer(
-                  child: TextField(
-                    controller: _repeatPasswordController,
-                    obscureText: _obscurePassword2,
-                    style : const TextStyle(
-                      fontFamily: 'Helvetica',
-                      fontSize: 16,
-                    ),
-                    decoration: _buildInputDecoration(
-                      hintText: 'Repeat Password',
-                      hasError: _repeatPasswordErrorMessage != null,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword2
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                      const SizedBox(height: 30),
+                      _buildFieldContainer(
+                        child: TextField(
+                          controller: _emailController,
+                          style: TextStyle(
+                            fontFamily: 'Helvetica',
+                            fontSize: bigText ? 18 : 16,
+                            fontWeight:
+                                bigText ? FontWeight.bold : FontWeight.normal,
+                            color:
+                                highContrast
+                                    ? (isDark
+                                        ? AppColors.colorTextDarkHigh
+                                        : AppColors.colorTextHigh)
+                                    : (isDark
+                                        ? AppColors.colorTextDark
+                                        : AppColors.colorText),
+                          ),
+                          decoration: _buildInputDecoration(
+                            hintText: 'Email',
+                            hasError: _emailErrorMessage != null,
+                            isDark: isDark,
+                            highContrast: highContrast,
+                          ),
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword2 = !_obscurePassword2;
-                          });
-                        },
                       ),
-                    ),
-                  ),
-                ),
-                if (_repeatPasswordErrorMessage != null)
-                  _buildErrorMessage(_repeatPasswordErrorMessage!)
-                else
-                  const SizedBox(height: 15),
-
-                // REGISTER BUTTON with shadow & white text
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black12, // lighter shadow
-                        blurRadius: 4,
-                        offset: Offset(2, 2),
+                      if (_emailErrorMessage != null)
+                        _buildErrorMessage(
+                          _emailErrorMessage!,
+                          isDark,
+                          highContrast,
+                          bigText,
+                        )
+                      else
+                        const SizedBox(height: 15),
+                      _buildFieldContainer(
+                        child: TextField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          style: TextStyle(
+                            fontFamily: 'Helvetica',
+                            fontSize: bigText ? 18 : 16,
+                            fontWeight:
+                                bigText ? FontWeight.bold : FontWeight.normal,
+                            color:
+                                highContrast
+                                    ? (isDark
+                                        ? AppColors.colorTextDarkHigh
+                                        : AppColors.colorTextHigh)
+                                    : (isDark
+                                        ? AppColors.colorTextDark
+                                        : AppColors.colorText),
+                          ),
+                          decoration: _buildInputDecoration(
+                            hintText: 'Password',
+                            hasError: _passwordErrorMessage != null,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color:
+                                    highContrast
+                                        ? (isDark
+                                            ? AppColors.colorTextDarkHigh
+                                            : AppColors.colorTextHigh)
+                                        : (isDark
+                                            ? AppColors.colorTextDark
+                                            : AppColors.colorText),
+                              ),
+                              onPressed:
+                                  () => setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  ),
+                            ),
+                            isDark: isDark,
+                            highContrast: highContrast,
+                          ),
+                        ),
+                      ),
+                      if (_passwordErrorMessage != null)
+                        _buildErrorMessage(
+                          _passwordErrorMessage!,
+                          isDark,
+                          highContrast,
+                          bigText,
+                        )
+                      else
+                        const SizedBox(height: 15),
+                      _buildFieldContainer(
+                        child: TextField(
+                          controller: _repeatPasswordController,
+                          obscureText: _obscurePassword2,
+                          style: TextStyle(
+                            fontFamily: 'Helvetica',
+                            fontSize: bigText ? 18 : 16,
+                            fontWeight:
+                                bigText ? FontWeight.bold : FontWeight.normal,
+                            color:
+                                highContrast
+                                    ? (isDark
+                                        ? AppColors.colorTextDarkHigh
+                                        : AppColors.colorTextHigh)
+                                    : (isDark
+                                        ? AppColors.colorTextDark
+                                        : AppColors.colorText),
+                          ),
+                          decoration: _buildInputDecoration(
+                            hintText: 'Repeat Password',
+                            hasError: _repeatPasswordErrorMessage != null,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword2
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color:
+                                    highContrast
+                                        ? (isDark
+                                            ? AppColors.colorTextDarkHigh
+                                            : AppColors.colorTextHigh)
+                                        : (isDark
+                                            ? AppColors.colorTextDark
+                                            : AppColors.colorText),
+                              ),
+                              onPressed:
+                                  () => setState(
+                                    () =>
+                                        _obscurePassword2 = !_obscurePassword2,
+                                  ),
+                            ),
+                            isDark: isDark,
+                            highContrast: highContrast,
+                          ),
+                        ),
+                      ),
+                      if (_repeatPasswordErrorMessage != null)
+                        _buildErrorMessage(
+                          _repeatPasswordErrorMessage!,
+                          isDark,
+                          highContrast,
+                          bigText,
+                        )
+                      else
+                        const SizedBox(height: 15),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _onRegisterPressed,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  highContrast
+                                      ? (isDark
+                                          ? AppColors.color1DarkHigh
+                                          : AppColors.color1High)
+                                      : (isDark
+                                          ? AppColors.color1Dark
+                                          : AppColors.color1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text(
+                              'Register',
+                              style: TextStyle(
+                                color:
+                                    highContrast
+                                        ? (isDark
+                                            ? AppColors.colorButtonTextDarkHigh
+                                            : AppColors.colorButtonTextHigh)
+                                        : (isDark
+                                            ? AppColors.colorButtonTextDark
+                                            : AppColors.colorButtonText),
+                                fontFamily: 'Helvetica',
+                                fontSize: bigText ? 20 : 18,
+                                fontWeight:
+                                    bigText
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _onRegisterPressed,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red[400],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                ),
+              ),
+            );
+          } else {
+            return Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Text(
+                      'Registration',
+                      style: TextStyle(
+                        fontSize: bigText ? 38 : 30,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Helvetica',
+                        color:
+                            highContrast
+                                ? (isDark
+                                    ? AppColors.colorTextDarkHigh
+                                    : AppColors.colorTextHigh)
+                                : (isDark
+                                    ? AppColors.colorTextDark
+                                    : AppColors.colorText),
                       ),
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Helvetica',
-                          fontSize: 18,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 30),
+                            _buildFieldContainer(
+                              child: TextField(
+                                controller: _emailController,
+                                style: TextStyle(
+                                  fontFamily: 'Helvetica',
+                                  fontSize: bigText ? 18 : 16,
+                                  fontWeight:
+                                      bigText
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                  color:
+                                      highContrast
+                                          ? (isDark
+                                              ? AppColors.colorTextDarkHigh
+                                              : AppColors.colorTextHigh)
+                                          : (isDark
+                                              ? AppColors.colorTextDark
+                                              : AppColors.colorText),
+                                ),
+                                decoration: _buildInputDecoration(
+                                  hintText: 'Email',
+                                  hasError: _emailErrorMessage != null,
+                                  isDark: isDark,
+                                  highContrast: highContrast,
+                                ),
+                              ),
+                            ),
+                            if (_emailErrorMessage != null)
+                              _buildErrorMessage(
+                                _emailErrorMessage!,
+                                isDark,
+                                highContrast,
+                                bigText,
+                              )
+                            else
+                              const SizedBox(height: 15),
+                            _buildFieldContainer(
+                              child: TextField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                style: TextStyle(
+                                  fontFamily: 'Helvetica',
+                                  fontSize: bigText ? 18 : 16,
+                                  fontWeight:
+                                      bigText
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                  color:
+                                      highContrast
+                                          ? (isDark
+                                              ? AppColors.colorTextDarkHigh
+                                              : AppColors.colorTextHigh)
+                                          : (isDark
+                                              ? AppColors.colorTextDark
+                                              : AppColors.colorText),
+                                ),
+                                decoration: _buildInputDecoration(
+                                  hintText: 'Password',
+                                  hasError: _passwordErrorMessage != null,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                      color:
+                                          highContrast
+                                              ? (isDark
+                                                  ? AppColors.colorTextDarkHigh
+                                                  : AppColors.colorTextHigh)
+                                              : (isDark
+                                                  ? AppColors.colorTextDark
+                                                  : AppColors.colorText),
+                                    ),
+                                    onPressed:
+                                        () => setState(
+                                          () =>
+                                              _obscurePassword =
+                                                  !_obscurePassword,
+                                        ),
+                                  ),
+                                  isDark: isDark,
+                                  highContrast: highContrast,
+                                ),
+                              ),
+                            ),
+                            if (_passwordErrorMessage != null)
+                              _buildErrorMessage(
+                                _passwordErrorMessage!,
+                                isDark,
+                                highContrast,
+                                bigText,
+                              )
+                            else
+                              const SizedBox(height: 15),
+                            _buildFieldContainer(
+                              child: TextField(
+                                controller: _repeatPasswordController,
+                                obscureText: _obscurePassword2,
+                                style: TextStyle(
+                                  fontFamily: 'Helvetica',
+                                  fontSize: bigText ? 18 : 16,
+                                  fontWeight:
+                                      bigText
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                  color:
+                                      highContrast
+                                          ? (isDark
+                                              ? AppColors.colorTextDarkHigh
+                                              : AppColors.colorTextHigh)
+                                          : (isDark
+                                              ? AppColors.colorTextDark
+                                              : AppColors.colorText),
+                                ),
+                                decoration: _buildInputDecoration(
+                                  hintText: 'Repeat Password',
+                                  hasError: _repeatPasswordErrorMessage != null,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword2
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                      color:
+                                          highContrast
+                                              ? (isDark
+                                                  ? AppColors.colorTextDarkHigh
+                                                  : AppColors.colorTextHigh)
+                                              : (isDark
+                                                  ? AppColors.colorTextDark
+                                                  : AppColors.colorText),
+                                    ),
+                                    onPressed:
+                                        () => setState(
+                                          () =>
+                                              _obscurePassword2 =
+                                                  !_obscurePassword2,
+                                        ),
+                                  ),
+                                  isDark: isDark,
+                                  highContrast: highContrast,
+                                ),
+                              ),
+                            ),
+                            if (_repeatPasswordErrorMessage != null)
+                              _buildErrorMessage(
+                                _repeatPasswordErrorMessage!,
+                                isDark,
+                                highContrast,
+                                bigText,
+                              )
+                            else
+                              const SizedBox(height: 15),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 4,
+                                    offset: Offset(2, 2),
+                                  ),
+                                ],
+                              ),
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: _onRegisterPressed,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        highContrast
+                                            ? (isDark
+                                                ? AppColors.color1DarkHigh
+                                                : AppColors.color1High)
+                                            : (isDark
+                                                ? AppColors.color1Dark
+                                                : AppColors.color1),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Register',
+                                    style: TextStyle(
+                                      color:
+                                          highContrast
+                                              ? (isDark
+                                                  ? AppColors
+                                                      .colorButtonTextDarkHigh
+                                                  : AppColors
+                                                      .colorButtonTextHigh)
+                                              : (isDark
+                                                  ? AppColors
+                                                      .colorButtonTextDark
+                                                  : AppColors.colorButtonText),
+                                      fontFamily: 'Helvetica',
+                                      fontSize: bigText ? 20 : 18,
+                                      fontWeight:
+                                          bigText
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
+            );
+          }
+        },
       ),
     );
   }
@@ -268,7 +602,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             borderRadius: BorderRadius.circular(10),
             boxShadow: const [
               BoxShadow(
-                color: Colors.black12, // lighter than black26
+                color: Colors.black12,
                 blurRadius: 4,
                 offset: Offset(2, 2),
               ),
@@ -280,18 +614,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Helper: Build the input decoration with optional suffix icon & red stroke on error
   InputDecoration _buildInputDecoration({
     required String hintText,
     bool hasError = false,
     Widget? suffixIcon,
+    required bool isDark,
+    required bool highContrast,
   }) {
+    final fillColor =
+        highContrast
+            ? (isDark
+                ? AppColors.colorInputBgDarkHigh
+                : AppColors.colorInputBgHigh)
+            : (isDark ? AppColors.colorInputBgDark : AppColors.colorInputBg);
+    final hintColor =
+        highContrast
+            ? (isDark ? AppColors.colorHintDarkHigh : AppColors.colorHintHigh)
+            : (isDark ? AppColors.colorHintDark : AppColors.colorHint);
     return InputDecoration(
       filled: true,
+      fillColor: fillColor,
       hintText: hintText,
+      hintStyle: TextStyle(color: hintColor, fontFamily: 'Helvetica'),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       suffixIcon: suffixIcon,
-      // If there's an error, show red border
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide:
@@ -302,16 +648,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Helper: Build inline error message
-  Widget _buildErrorMessage(String msg) {
+  Widget _buildErrorMessage(
+    String msg,
+    bool isDark,
+    bool highContrast,
+    bool bigText,
+  ) {
+    final textColor = highContrast ? AppColors.color1High : AppColors.color1;
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: Text(
         msg,
-        style: const TextStyle(
-          color: Colors.red,
+        style: TextStyle(
+          color: textColor,
           fontFamily: 'Helvetica',
-          fontSize: 12,
+          fontSize: bigText ? 14 : 12,
         ),
       ),
     );
