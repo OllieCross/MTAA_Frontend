@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path/path.dart' as p;
+import 'package:http_parser/http_parser.dart';
 import 'main.dart';
 import 'server_config.dart';
 import 'app_settings.dart';
@@ -59,8 +63,6 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
         ibanController.text = acc['iban'] ?? '';
         descriptionController.text = acc['description'] ?? '';
       });
-
-      // Optionálne: načítaj obrázky ak chceš ich zobraziť aj v edite
     } else {
       debugPrint('Failed to fetch accommodation details');
     }
@@ -80,24 +82,62 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     }
   }
 
+  /// Converts the provided image to JPEG and resizes it so that the *shorter* side
+  Future<List<int>?> _convertAndResizeImage(XFile xfile) async {
+    try {
+      final bytes = await xfile.readAsBytes();
+      img.Image? original;
+
+      try {
+        original = img.decodeImage(bytes);
+      } catch (_) {
+        original = null;
+      }
+
+      // If decoding failed (e.g. HEIC), fall back to flutter_image_compress which
+      // can leverage the platform codecs.
+      if (original == null) {
+        final compressed = await FlutterImageCompress.compressWithFile(
+          xfile.path,
+          quality: 85,
+          format: CompressFormat.jpeg,
+          minWidth: 1024,
+          minHeight: 1024,
+        );
+        return compressed;
+      }
+
+      final w = original.width;
+      final h = original.height;
+      final shorter = w < h ? w : h;
+      if (shorter > 1024) {
+        final scale = 1024 / shorter;
+        final newW = (w * scale).round();
+        final newH = (h * scale).round();
+        original = img.copyResize(
+          original,
+          width: newW,
+          height: newH,
+          interpolation: img.Interpolation.average,
+        );
+      }
+
+      // Encode as JPEG (quality 85 gives a good balance).
+      return img.encodeJpg(original, quality: 85);
+    } catch (e) {
+      debugPrint('Image processing error: $e');
+      return null;
+    }
+  }
+
   Future<void> _submitAccommodation() async {
     final token = globalToken;
     if (token == null) return;
 
     if (selectedImages.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Please select at least 3 images.",
-            style: TextStyle(
-              color: _textColor,
-              fontSize: _bigText ? 16 : 14,
-              fontWeight: _bigText ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          backgroundColor: _backgroundColor,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(_buildSnackBar(
+        "Please select at least 3 images.",
+      ));
       return;
     }
 
@@ -105,57 +145,55 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     setState(() => isUploading = true);
 
     final uri = Uri.parse('http://$serverIp:$serverPort/add-accommodation');
-    final request =
-        http.MultipartRequest('POST', uri)
-          ..headers['Authorization'] = 'Bearer $globalToken'
-          ..fields['name'] = nameController.text
-          ..fields['address'] = addressController.text
-          ..fields['guests'] = guestsController.text
-          ..fields['price'] = priceController.text
-          ..fields['iban'] = ibanController.text
-          ..fields['description'] = descriptionController.text;
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $globalToken'
+      ..fields['name'] = nameController.text
+      ..fields['address'] = addressController.text
+      ..fields['guests'] = guestsController.text
+      ..fields['price'] = priceController.text
+      ..fields['iban'] = ibanController.text
+      ..fields['description'] = descriptionController.text;
 
-    for (var image in selectedImages) {
-      request.files.add(
-        await http.MultipartFile.fromPath('images', image.path),
-      );
+    // Process each image (convert & resize) before attaching.
+    for (final image in selectedImages) {
+      final processedBytes = await _convertAndResizeImage(image);
+      if (processedBytes == null) continue;
+
+      request.files.add(http.MultipartFile.fromBytes(
+        'images',
+        processedBytes,
+        filename: '${p.basenameWithoutExtension(image.path)}.jpg',
+        contentType: MediaType('image', 'jpeg'),
+      ));
     }
 
     final response = await request.send();
     setState(() => isUploading = false);
 
     if (response.statusCode == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Accommodation added successfully.",
-            style: TextStyle(
-              color: _textColor,
-              fontSize: _bigText ? 16 : 14,
-              fontWeight: _bigText ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          backgroundColor: _backgroundColor,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(_buildSnackBar(
+        "Accommodation added successfully.",
+      ));
       Navigator.pop(context);
     } else {
       final respStr = await response.stream.bytesToString();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Error: $respStr",
-            style: TextStyle(
-              color: _textColor,
-              fontSize: _bigText ? 16 : 14,
-              fontWeight: _bigText ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          backgroundColor: _backgroundColor,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(_buildSnackBar(
+        "Error: $respStr",
+      ));
     }
   }
+
+  SnackBar _buildSnackBar(String message) => SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: _textColor,
+            fontSize: _bigText ? 16 : 14,
+            fontWeight: _bigText ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        backgroundColor: _backgroundColor,
+      );
 
   @override
   void dispose() {
@@ -180,20 +218,15 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     _bigText = settings.bigText;
     _highContrast = settings.highContrast;
     _isDark = Theme.of(context).brightness == Brightness.dark;
-    _backgroundColor =
-        _highContrast
-            ? (_isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
-            : (_isDark ? AppColors.colorBgDark : AppColors.colorBg);
-    _textColor =
-        _highContrast
-            ? (_isDark ? AppColors.colorTextDarkHigh : AppColors.colorTextHigh)
-            : (_isDark ? AppColors.colorTextDark : AppColors.colorText);
-    _fillColor =
-        _highContrast
-            ? (_isDark
-                ? AppColors.colorInputBgDarkHigh
-                : AppColors.colorInputBgHigh)
-            : (_isDark ? AppColors.colorInputBgDark : AppColors.colorInputBg);
+    _backgroundColor = _highContrast
+        ? (_isDark ? AppColors.colorBgDarkHigh : AppColors.colorBgHigh)
+        : (_isDark ? AppColors.colorBgDark : AppColors.colorBg);
+    _textColor = _highContrast
+        ? (_isDark ? AppColors.colorTextDarkHigh : AppColors.colorTextHigh)
+        : (_isDark ? AppColors.colorTextDark : AppColors.colorText);
+    _fillColor = _highContrast
+        ? (_isDark ? AppColors.colorInputBgDarkHigh : AppColors.colorInputBgHigh)
+        : (_isDark ? AppColors.colorInputBgDark : AppColors.colorInputBg);
   }
 
   @override
@@ -258,10 +291,7 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
                     child: Column(
                       children: [
                         _buildField(label: "Name", controller: nameController),
-                        _buildField(
-                          label: "Address",
-                          controller: addressController,
-                        ),
+                        _buildField(label: "Address", controller: addressController),
                         _buildField(
                           label: "Nr. of Guests",
                           controller: guestsController,
@@ -376,39 +406,38 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children:
-                selectedImages.map((image) {
-                  return Stack(
-                    alignment: Alignment.topRight,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          File(image.path),
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                        ),
+            children: selectedImages.map((image) {
+              return Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(image.path),
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedImages.remove(image);
+                      });
+                    },
+                    child: CircleAvatar(
+                      radius: 10,
+                      backgroundColor: _textColor.withOpacity(0.6),
+                      child: Icon(
+                        Icons.close,
+                        size: 14,
+                        color: _backgroundColor,
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedImages.remove(image);
-                          });
-                        },
-                        child: CircleAvatar(
-                          radius: 10,
-                          backgroundColor: _textColor.withOpacity(0.6),
-                          child: Icon(
-                            Icons.close,
-                            size: 14,
-                            color: _backgroundColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
           ),
       ],
     );
@@ -418,10 +447,9 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     return ElevatedButton(
       onPressed: isUploading ? null : _submitAccommodation,
       style: ElevatedButton.styleFrom(
-        backgroundColor:
-            _highContrast
-                ? (_isDark ? AppColors.color1DarkHigh : AppColors.color1High)
-                : (_isDark ? AppColors.color1Dark : AppColors.color1),
+        backgroundColor: _highContrast
+            ? (_isDark ? AppColors.color1DarkHigh : AppColors.color1High)
+            : (_isDark ? AppColors.color1Dark : AppColors.color1),
         elevation: 2,
         padding: EdgeInsets.symmetric(
           horizontal: 30,
@@ -429,32 +457,30 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      child:
-          isUploading
-              ? SizedBox(
-                width: _bigText ? 24 : 20,
-                height: _bigText ? 24 : 20,
-                child: CircularProgressIndicator(
-                  color: _textColor,
-                  strokeWidth: 2,
-                ),
-              )
-              : Text(
-                isEdit ? "Save Changes" : "Add Accommodation",
-                style: TextStyle(
-                  color:
-                      _highContrast
-                          ? (_isDark
-                              ? AppColors.colorButtonTextDarkHigh
-                              : AppColors.colorButtonTextHigh)
-                          : (_isDark
-                              ? AppColors.colorButtonTextDark
-                              : AppColors.colorButtonText),
-                  fontSize: _bigText ? 20 : 18,
-                  fontFamily: 'Helvetica',
-                  fontWeight: _bigText ? FontWeight.bold : FontWeight.normal,
-                ),
+      child: isUploading
+          ? SizedBox(
+              width: _bigText ? 24 : 20,
+              height: _bigText ? 24 : 20,
+              child: CircularProgressIndicator(
+                color: _textColor,
+                strokeWidth: 2,
               ),
+            )
+          : Text(
+              isEdit ? "Save Changes" : "Add Accommodation",
+              style: TextStyle(
+                color: _highContrast
+                    ? (_isDark
+                        ? AppColors.colorButtonTextDarkHigh
+                        : AppColors.colorButtonTextHigh)
+                    : (_isDark
+                        ? AppColors.colorButtonTextDark
+                        : AppColors.colorButtonText),
+                fontSize: _bigText ? 20 : 18,
+                fontFamily: 'Helvetica',
+                fontWeight: _bigText ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
     );
   }
 }

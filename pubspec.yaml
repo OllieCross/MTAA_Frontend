@@ -15,6 +15,10 @@ dependencies:
   provider: ^6.1.5 # contrast / big text
   intl: ^0.18.0 # for date formatting
   flutter_adaptive_scaffold: ^0.2.0 # for adaptive navigation
+  image: ^4.1.7 # for image manipulation
+  flutter_image_compress: ^2.2.0 # for image compression
+  path: ^1.9.0 # for file path manipulation
+  http_parser: ^4.0.0 # for parsing HTTP responses
 
 dev_dependencies:
   flutter_test:
