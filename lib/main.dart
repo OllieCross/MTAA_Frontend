@@ -1,5 +1,6 @@
 // main.dart
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -10,11 +11,63 @@ import 'register.dart';
 import 'server_config.dart';
 import 'app_settings.dart';
 import 'accessibility_buttons.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 String? globalToken;
 
-void main() {
+final GlobalKey<ScaffoldMessengerState> globalScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
+Future<void> _initPush() async {
+  final messaging = FirebaseMessaging.instance;
+  await messaging.requestPermission();
+  await FirebaseMessaging.instance.requestPermission();
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+
+  try {
+    final token = Platform.isIOS && !Platform.isMacOS && !Platform.environment.containsKey('SIMULATOR_DEVICE_NAME')
+        ? await messaging.getToken()
+        : null;
+
+    if (token != null) {
+    }
+  } catch (e, st) {
+    debugPrint('FCM token error: $e');
+    debugPrintStack(stackTrace: st);
+  }
+
+  if (fcmToken != null && globalToken != null) {
+    await http.post(
+      Uri.parse('http://$serverIp:$serverPort/register-push'),
+      headers: {
+        'Authorization': 'Bearer $globalToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'token': fcmToken, 'platform': 'ios'}),
+    );
+  }
+
+  // optional: show foreground pushes nicely
+  const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+  final ios = DarwinInitializationSettings();
+  final fln = FlutterLocalNotificationsPlugin();
+  await fln.initialize(InitializationSettings(android: android, iOS: ios));
+  FirebaseMessaging.onMessage.listen((msg) {
+    fln.show(0, msg.notification?.title, msg.notification?.body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails('ch', 'channel'),
+          iOS: DarwinNotificationDetails(),
+        ));
+  });
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
 
   runApp(
     ChangeNotifierProvider(
@@ -22,6 +75,8 @@ void main() {
       child: const RoomFinderApp(),
     ),
   );
+
+  _initPush();
 }
 
 class RoomFinderApp extends StatelessWidget {
@@ -31,6 +86,7 @@ class RoomFinderApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: globalScaffoldMessengerKey,
       theme: ThemeData.light(useMaterial3: true),
       darkTheme: ThemeData.dark(useMaterial3: true),
       themeMode: ThemeMode.system,
@@ -179,6 +235,28 @@ class _LoginFormState extends State<_LoginForm> {
     _validate();
     if (_emailError || _passwordError) return;
 
+    late io.Socket socket;
+
+  void connectSocket(String jwt) {
+    socket = io.io('http://$serverIp:$serverPort', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+      'query': {'token': jwt},
+    });
+
+    socket.onConnect((_) => debugPrint('WS connected'));
+    socket.onDisconnect((_) => debugPrint('WS disconnected'));
+    socket.on('accommodation_liked', (data) {
+      // Show an in-app snackbar or update UI
+      final snackBar = SnackBar(
+        content: Text('Accommodation #${data['aid']} was ${data['action']}'),
+      );
+      globalScaffoldMessengerKey.currentState?.showSnackBar(snackBar);
+    });
+
+  socket.connect();
+}
+
     setState(() => _loginErrorMsg = null);
 
     try {
@@ -190,6 +268,7 @@ class _LoginFormState extends State<_LoginForm> {
 
       if (res.statusCode == 200) {
         globalToken = jsonDecode(res.body)['token'];
+        connectSocket(globalToken!);  
         if (!mounted) return;
         Navigator.push(
           context,

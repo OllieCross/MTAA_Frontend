@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"ios":{"default":{"projectId":"roomfinder-mtaa","appId":"1:911239656625:ios:689ed18df595c31740de90","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"roomfinder-mtaa","configurations":{"ios":"1:911239656625:ios:689ed18df595c31740de90"}}}}}}
