@@ -13,6 +13,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'app_settings.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MainScreenAccommodations extends StatefulWidget {
   const MainScreenAccommodations({super.key});
@@ -27,6 +28,12 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
   final TextEditingController guestController = TextEditingController();
   final ValueNotifier<DateTime?> dateFromNotifier = ValueNotifier(null);
   final ValueNotifier<DateTime?> dateToNotifier = ValueNotifier(null);
+
+  final Map<int, Future<Uint8List?>> _imageFutures = {};
+
+  Future<Uint8List?> _cachedFetch(int aid) {
+    return _imageFutures.putIfAbsent(aid, () => fetchAccommodationImage(aid));
+  }
 
   List<dynamic> accommodations = [];
   String? jwtToken = globalToken;
@@ -426,17 +433,43 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                                   itemBuilder: (context, index) {
                                     final item = accommodations[index];
                                     final isLiked = item['is_liked'] ?? false;
+                                    final aid = accommodations[index]['aid'];
                                     return FutureBuilder<Uint8List?>(
-                                      future: fetchAccommodationImage(
-                                        item['aid'],
-                                      ),
+                                      future: _cachedFetch(aid),
                                       builder: (context, snapshot) {
+                                        // ignore: unused_local_variable
                                         Widget imageWidget;
                                         if (snapshot.connectionState ==
                                                 ConnectionState.done &&
                                             snapshot.hasData) {
-                                          imageWidget = Image.memory(
-                                            snapshot.data!,
+                                          imageWidget = CachedNetworkImage(
+                                            imageUrl:
+                                                'http://$serverIp:$serverPort/accommodations/${item['aid']}/image/1',
+                                            httpHeaders: {
+                                              if (jwtToken != null)
+                                                'Authorization':
+                                                    'Bearer $jwtToken',
+                                            },
+                                            // while loading:
+                                            placeholder:
+                                                (context, url) => SizedBox(
+                                                  height: 180,
+                                                  child: Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
+                                                  ),
+                                                ),
+                                            // if image fails:
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    SizedBox(
+                                                      height: 180,
+                                                      child: Center(
+                                                        child: Icon(
+                                                          Icons.broken_image,
+                                                        ),
+                                                      ),
+                                                    ),
                                             fit: BoxFit.cover,
                                             height: 180,
                                             width: double.infinity,
@@ -484,7 +517,24 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                                                           10,
                                                         ),
                                                       ),
-                                                  child: imageWidget,
+                                                  child: CachedNetworkImage(
+                                                    imageUrl:
+                                                        'http://$serverIp:$serverPort/accommodations/${item['aid']}/image/1',
+                                                    httpHeaders: {
+                                                      if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+                                                    },
+                                                    placeholder: (ctx, url) => SizedBox(
+                                                      height: 180,
+                                                      child: Center(child: CircularProgressIndicator()),
+                                                    ),
+                                                    errorWidget: (ctx, url, error) => SizedBox(
+                                                      height: 180,
+                                                      child: Center(child: Icon(Icons.broken_image)),
+                                                    ),
+                                                    fit: BoxFit.cover,
+                                                    height: 180,
+                                                    width: double.infinity,
+                                                  ),
                                                 ),
                                                 Padding(
                                                   padding: const EdgeInsets.all(
@@ -821,14 +871,36 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                         final item = accommodations[index];
                         final isLiked = item['is_liked'] ?? false;
                         return FutureBuilder<Uint8List?>(
-                          future: fetchAccommodationImage(item['aid']),
+                          future: _cachedFetch(item['aid']),
                           builder: (context, snapshot) {
+                            // ignore: unused_local_variable
                             Widget imageWidget;
                             if (snapshot.connectionState ==
                                     ConnectionState.done &&
                                 snapshot.hasData) {
-                              imageWidget = Image.memory(
-                                snapshot.data!,
+                              imageWidget = CachedNetworkImage(
+                                imageUrl:
+                                    'http://$serverIp:$serverPort/accommodations/${item['aid']}/image/1',
+                                httpHeaders: {
+                                  if (jwtToken != null)
+                                    'Authorization': 'Bearer $jwtToken',
+                                },
+                                // while loading:
+                                placeholder:
+                                    (context, url) => SizedBox(
+                                      height: 180,
+                                      child: Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    ),
+                                // if image fails:
+                                errorWidget:
+                                    (context, url, error) => SizedBox(
+                                      height: 180,
+                                      child: Center(
+                                        child: Icon(Icons.broken_image),
+                                      ),
+                                    ),
                                 fit: BoxFit.cover,
                                 height: 180,
                                 width: double.infinity,
@@ -868,7 +940,24 @@ class _MainScreenAccommodationsState extends State<MainScreenAccommodations> {
                                       borderRadius: const BorderRadius.vertical(
                                         top: Radius.circular(10),
                                       ),
-                                      child: imageWidget,
+                                      child: CachedNetworkImage(
+                                        imageUrl:
+                                            'http://$serverIp:$serverPort/accommodations/${item['aid']}/image/1',
+                                        httpHeaders: {
+                                          if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+                                        },
+                                        placeholder: (ctx, url) => SizedBox(
+                                          height: 180,
+                                          child: Center(child: CircularProgressIndicator()),
+                                        ),
+                                        errorWidget: (ctx, url, error) => SizedBox(
+                                          height: 180,
+                                          child: Center(child: Icon(Icons.broken_image)),
+                                        ),
+                                        fit: BoxFit.cover,
+                                        height: 180,
+                                        width: double.infinity,
+                                      ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.all(12),
