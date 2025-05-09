@@ -7,6 +7,46 @@ import 'reserve_formular.dart';
 import 'server_config.dart';
 import 'app_settings.dart';
 import 'dart:convert';
+import 'dart:async';
+import 'offline_sync_repository.dart';
+
+
+class SyncToast extends StatefulWidget {
+  const SyncToast({super.key, required this.child, this.onSynced});
+  final Widget child;
+  final VoidCallback? onSynced;   // optional refresh hook
+
+  @override
+  State<SyncToast> createState() => _SyncToastState();
+}
+
+class _SyncToastState extends State<SyncToast> {
+  StreamSubscription? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = OfflineSyncRepository.instance.uploadSuccess.listen((draft) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"${draft.name}" synced successfully!'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      widget.onSynced?.call();
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
 
 typedef Json = Map<String, dynamic>;
 

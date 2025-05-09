@@ -91,8 +91,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             : (isDark ? AppColors.colorTextDark : AppColors.colorText);
     final cardColor =
         highContrast
-            ? (isDark ? const Color.fromARGB(255, 30, 30, 30) : AppColors.colorBgHigh)
-            : (isDark ? Colors.grey[800]! : const Color.fromARGB(255, 232, 232, 232));
+            ? (isDark
+                ? const Color.fromARGB(255, 30, 30, 30)
+                : AppColors.colorBgHigh)
+            : (isDark
+                ? Colors.grey[800]!
+                : const Color.fromARGB(255, 232, 232, 232));
 
     final headerStyle = TextStyle(
       fontSize: bigText ? 18 : 16,

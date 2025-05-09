@@ -42,6 +42,10 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
+		<string>processing</string>
+		<string>external-accessory</string>
+		<string>location</string>
+		<string>fetch</string>
 	</array>
 	<key>UIDeviceFamily</key>
 	<array>
@@ -63,9 +67,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 </dict>
 </plist>

@@ -6,11 +6,14 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:path/path.dart' as p;
 import 'package:http_parser/http_parser.dart';
 import 'main.dart';
 import 'server_config.dart';
 import 'app_settings.dart';
+import 'dart:typed_data';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'offline_sync_repository.dart';
+import 'accommodation_draft.dart';
 
 class AddAccommodationScreen extends StatefulWidget {
   final Map<String, dynamic>? accommodation;
@@ -82,7 +85,6 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     }
   }
 
-  /// Converts the provided image to JPEG and resizes it so that the *shorter* side
   Future<List<int>?> _convertAndResizeImage(XFile xfile) async {
     try {
       final bytes = await xfile.readAsBytes();
@@ -94,8 +96,6 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
         original = null;
       }
 
-      // If decoding failed (e.g. HEIC), fall back to flutter_image_compress which
-      // can leverage the platform codecs.
       if (original == null) {
         final compressed = await FlutterImageCompress.compressWithFile(
           xfile.path,
@@ -130,58 +130,93 @@ class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
     }
   }
 
-  Future<void> _submitAccommodation() async {
-    final token = globalToken;
-    if (token == null) return;
+Future<void> _submitAccommodation() async {
+  if (!mounted) return;
 
-    if (selectedImages.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(_buildSnackBar(
-        "Please select at least 3 images.",
-      ));
-      return;
-    }
+  if (selectedImages.length < 3) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      _buildSnackBar("Please select at least 3 images."),
+    );
+    return;
+  }
 
-    if (!mounted) return;
-    setState(() => isUploading = true);
+  setState(() => isUploading = true);
 
-    final uri = Uri.parse('http://$serverIp:$serverPort/add-accommodation');
-    final request = http.MultipartRequest('POST', uri)
-      ..headers['Authorization'] = 'Bearer $globalToken'
-      ..fields['name'] = nameController.text
-      ..fields['address'] = addressController.text
-      ..fields['guests'] = guestsController.text
-      ..fields['price'] = priceController.text
-      ..fields['iban'] = ibanController.text
-      ..fields['description'] = descriptionController.text;
+  final List<Uint8List> imageBytes = [];
+  for (final imgX in selectedImages) {
+    final processed = await _convertAndResizeImage(imgX);
+    if (processed != null) imageBytes.add(Uint8List.fromList(processed));
+  }
 
-    // Process each image (convert & resize) before attaching.
-    for (final image in selectedImages) {
-      final processedBytes = await _convertAndResizeImage(image);
-      if (processedBytes == null) continue;
+  final token = globalToken;
+  final conn   = await Connectivity().checkConnectivity();
+  final online = !(conn.length == 1 && conn.first == ConnectivityResult.none);
 
-      request.files.add(http.MultipartFile.fromBytes(
-        'images',
-        processedBytes,
-        filename: '${p.basenameWithoutExtension(image.path)}.jpg',
-        contentType: MediaType('image', 'jpeg'),
-      ));
-    }
+  bool uploaded = false;
+  if (token != null && online) {
+    uploaded = await _tryUploadOnline(token, imageBytes);
+  }
 
-    final response = await request.send();
-    setState(() => isUploading = false);
-
-    if (response.statusCode == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(_buildSnackBar(
-        "Accommodation added successfully.",
-      ));
+  if (!uploaded) {
+    await OfflineSyncRepository.instance.addDraft(
+      AccommodationDraft(
+        remoteId: widget.accommodation?['aid'],
+        name: nameController.text,
+        address: addressController.text,
+        guests: int.tryParse(guestsController.text) ?? 0,
+        price: double.tryParse(priceController.text) ?? 0.0,
+        iban: ibanController.text,
+        description: descriptionController.text,
+        images: imageBytes,
+      ),
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        _buildSnackBar("Saved locally - will sync when you're back online."),
+      );
       Navigator.pop(context);
-    } else {
-      final respStr = await response.stream.bytesToString();
-      ScaffoldMessenger.of(context).showSnackBar(_buildSnackBar(
-        "Error: $respStr",
-      ));
     }
   }
+
+  setState(() => isUploading = false);
+}
+
+Future<bool> _tryUploadOnline(String token, List<Uint8List> images) async {
+  final uri = Uri.parse('http://$serverIp:$serverPort/add-accommodation');
+  final req = http.MultipartRequest('POST', uri)
+    ..headers['Authorization'] = 'Bearer $token'
+    ..fields['name']        = nameController.text
+    ..fields['address']     = addressController.text
+    ..fields['guests']      = guestsController.text
+    ..fields['price']       = priceController.text
+    ..fields['iban']        = ibanController.text
+    ..fields['description'] = descriptionController.text;
+
+  for (final bytes in images) {
+    req.files.add(http.MultipartFile.fromBytes(
+      'images',
+      bytes,
+      filename: '${DateTime.now().millisecondsSinceEpoch}.jpg',
+      contentType: MediaType('image', 'jpeg'),
+    ));
+  }
+
+  final resp = await req.send();
+  if (resp.statusCode == 201) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        _buildSnackBar("Accommodation added successfully."),
+      );
+      Navigator.pop(context);
+    }
+    return true;
+  } else {
+    // (Optional) read error body for diagnostics
+    final err = await resp.stream.bytesToString();
+    debugPrint('Upload failed: $err');
+    return false;
+  }
+}
 
   SnackBar _buildSnackBar(String message) => SnackBar(
         content: Text(

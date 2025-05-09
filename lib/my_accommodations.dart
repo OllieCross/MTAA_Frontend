@@ -7,6 +7,45 @@ import 'main.dart';
 import 'add_accommondation.dart';
 import 'server_config.dart';
 import 'app_settings.dart';
+import 'dart:async';
+import 'offline_sync_repository.dart';
+
+class SyncToast extends StatefulWidget {
+  const SyncToast({super.key, required this.child, this.onSynced});
+  final Widget child;
+  final VoidCallback? onSynced;
+
+  @override
+  State<SyncToast> createState() => _SyncToastState();
+}
+
+class _SyncToastState extends State<SyncToast> {
+  StreamSubscription? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = OfflineSyncRepository.instance.uploadSuccess.listen((draft) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"${draft.name}" synced successfully!'),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      widget.onSynced?.call();
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
 
 class MyAccommodationsScreen extends StatefulWidget {
   const MyAccommodationsScreen({super.key});
@@ -119,7 +158,7 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
     );
 
     return Scaffold(
-      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 2),
       backgroundColor: backgroundColor,
       appBar: AppBar(
         title: Text("My Accommodations", style: titleStyle),

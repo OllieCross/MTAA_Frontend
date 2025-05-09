@@ -1,4 +1,3 @@
-// main.dart
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
@@ -15,6 +14,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'offline_sync_repository.dart';
+import 'accommodation_draft.dart';
 
 String? globalToken;
 
@@ -64,15 +66,29 @@ Future<void> _initPush() async {
   });
 }
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp();
+  await Hive.initFlutter();
+  Hive.registerAdapter(AccommodationDraftAdapter());
+
+  OfflineSyncRepository.instance;
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AppSettings(),
-      child: const RoomFinderApp(),
+    SyncToast(
+      child:
+      MultiProvider(
+        providers: [
+          Provider<OfflineSyncRepository>.value(
+            value: OfflineSyncRepository.instance,
+          ),
+          ChangeNotifierProvider<AppSettings>(
+            create: (_) => AppSettings(),
+          ),
+        ],
+        child: const RoomFinderApp(),
+      ),
     ),
   );
 

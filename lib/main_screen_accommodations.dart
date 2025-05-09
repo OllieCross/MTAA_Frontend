@@ -14,6 +14,45 @@ import 'package:provider/provider.dart';
 import 'app_settings.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'offline_sync_repository.dart';
+import 'dart:async';
+
+class SyncToast extends StatefulWidget {
+  const SyncToast({super.key, required this.child, this.onSynced});
+  final Widget child;
+  final VoidCallback? onSynced;   // optional refresh hook
+
+  @override
+  State<SyncToast> createState() => _SyncToastState();
+}
+
+class _SyncToastState extends State<SyncToast> {
+  StreamSubscription? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = OfflineSyncRepository.instance.uploadSuccess.listen((draft) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"${draft.name}" synced successfully!'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      widget.onSynced?.call();
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
 
 class MainScreenAccommodations extends StatefulWidget {
   const MainScreenAccommodations({super.key});
