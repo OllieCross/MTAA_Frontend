@@ -20,7 +20,7 @@ import 'dart:async';
 class SyncToast extends StatefulWidget {
   const SyncToast({super.key, required this.child, this.onSynced});
   final Widget child;
-  final VoidCallback? onSynced;   // optional refresh hook
+  final VoidCallback? onSynced;
 
   @override
   State<SyncToast> createState() => _SyncToastState();
