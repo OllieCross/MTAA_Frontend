@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
 import 'main_screen_accommodations.dart';
 import 'register.dart';
 import 'server_config.dart';
@@ -14,21 +16,143 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'offline_sync_repository.dart';
 import 'accommodation_draft.dart';
 import 'dart:async';
+import 'package:background_fetch/background_fetch.dart';
+import 'package:intl/intl.dart';
+
 
 String? globalToken;
-
+int? globalUserId;
+final FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotificationsPlugin();
 final GlobalKey<ScaffoldMessengerState> globalScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+Future<void> notifyNextStay() async {
+  final uri = Uri.parse('http://$serverIp:$serverPort/upcoming_reservations');
+  final res = await http.get(uri, headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $globalToken'
+  });
+  if (res.statusCode != 200) return;
+  final List<dynamic> list = jsonDecode(res.body);
+  if (list.isEmpty) return;
+  final next = DateTime.parse(list.first['from']);
+  final String dateOnly = DateFormat('yyyy-MM-dd').format(next);
+  print('[${DateTime.now()}] > notifyNextStay: showing notification for next stay on $dateOnly');
+  await notificationsPlugin.show(
+    0,
+    'Next stay',
+    'Your next stay starts on $dateOnly',
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        'next_stay_channel',
+        'Next Stay',
+        channelDescription: 'Minute-by-minute next stay reminder',
+        importance: Importance.max,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    ),
+  );
+}
+
+Future<void> _backgroundFetchTask(String taskId) async {
+  print('[${DateTime.now()}] > backgroundFetchTask: showing promotional notification');
+
+  final List<String> promos = [
+    'Get 30% off on your next stay',
+    'Enjoy a free breakfast with your stay',
+    'Upgrade your room at no extra cost',
+    'Early check-in available on request',
+    'Late check-out at no extra charge'
+  ];
+
+  promos.shuffle();
+  final String promoMessage = promos.first;
+  await notificationsPlugin.show(
+    0,
+    'Special Offer',
+    promoMessage,
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        'promo_channel',
+        'Promotions',
+        channelDescription: 'Latest deals and offers',
+        importance: Importance.max,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    ),
+  );
+
+  print('[${DateTime.now()}] > backgroundFetchTask: finished');
+  BackgroundFetch.finish(taskId);
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
   await Hive.initFlutter();
   Hive.registerAdapter(AccommodationDraftAdapter());
   OfflineSyncRepository.instance;
 
+  await notificationsPlugin.initialize(
+    InitializationSettings(
+      iOS: DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+        defaultPresentAlert: true,
+        defaultPresentBadge: true,
+        defaultPresentSound: true,
+      ),
+    ),
+  );
+
+    final iosImpl = notificationsPlugin
+      .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+  if (iosImpl != null) {
+    await iosImpl.requestPermissions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
+
+  BackgroundFetch.registerHeadlessTask(_backgroundFetchTask);
+
+  Timer.periodic(const Duration(minutes: 1), (_) {
+    print('[${DateTime.now()}] > Timer fired, calling notifyNextStay()');
+    notifyNextStay();
+  });
+
+  await BackgroundFetch.configure(
+    BackgroundFetchConfig(
+      minimumFetchInterval: 1,
+      stopOnTerminate: false,
+      enableHeadless: true,
+      requiresBatteryNotLow: false,
+      requiresCharging: false,
+      requiresStorageNotLow: false,
+      requiresDeviceIdle: false,
+      requiredNetworkType: NetworkType.NONE,
+    ),
+    _backgroundFetchTask,
+  );
+
+  BackgroundFetch.status.then((status) {
+  print('[BackgroundFetch] status: $status');
+});
+
   runApp(
     SyncToast(
-      child:
-      MultiProvider(
+      child: MultiProvider(
         providers: [
           Provider<OfflineSyncRepository>.value(
             value: OfflineSyncRepository.instance,
@@ -195,56 +319,63 @@ class _LoginFormState extends State<_LoginForm> {
     });
   }
 
-  Future<void> _login() async {
-    _validate();
-    if (_emailError || _passwordError) return;
+Future<void> _login() async {
+  _validate();
+  if (_emailError || _passwordError) return;
 
-    late io.Socket socket;
+  late io.Socket socket;
 
   void connectSocket(String jwt) {
-  socket = io.io('http://$serverIp:$serverPort', <String, dynamic>{
-    'transports': ['websocket'],
-    'autoConnect': false,
-    'query': {'token': jwt},
-  });
-
-  socket.onConnect((_) => debugPrint('WS connected'));
-  socket.onDisconnect((_) => debugPrint('WS disconnected'));
-
-  socket.on('accommodation_liked', (payload) {
-    final message = payload['message'] as String? ?? 'Notification';
-    globalScaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  });
-
-  socket.connect();
-  }
-
-    setState(() => _loginErrorMsg = null);
-
-    try {
-      final res = await http.post(
-        Uri.parse('http://$serverIp:$serverPort/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': _email.text, 'password': _password.text}),
+    debugPrint('connectSocket called with jwt: $jwt');
+    socket = io.io('http://$serverIp:$serverPort', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+      'query': {'token': jwt},
+    });
+    socket.onConnect((_) {
+      debugPrint('WS connected');
+    });
+    socket.onDisconnect((_) {
+      debugPrint('WS disconnected');
+    });
+    socket.on('connect_error', (err) {
+      debugPrint('WS connect_error: $err');
+    });
+    socket.on('accommodation_liked', (payload) {
+      debugPrint('Received accommodation_liked: $payload');
+      final message = payload['message'] as String? ?? 'Notification';
+      globalScaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(message)),
       );
-
-      if (res.statusCode == 200) {
-        globalToken = jsonDecode(res.body)['token'];
-        connectSocket(globalToken!);  
-        if (!mounted) return;
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => MainScreenAccommodations()),
-        );
-      } else {
-        setState(() => _loginErrorMsg = 'Invalid email or password');
-      }
-    } catch (e) {
-      setState(() => _loginErrorMsg = 'Connection error: $e');
-    }
+    });
+    debugPrint('Calling socket.connect()');
+    socket.connect();
   }
+
+  setState(() => _loginErrorMsg = null);
+
+  try {
+    final res = await http.post(
+      Uri.parse('http://$serverIp:$serverPort/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': _email.text, 'password': _password.text}),
+    );
+
+    if (res.statusCode == 200) {
+      globalToken = jsonDecode(res.body)['token'];
+      connectSocket(globalToken!);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => MainScreenAccommodations()),
+      );
+    } else {
+      setState(() => _loginErrorMsg = 'Invalid email or password');
+    }
+  } catch (e) {
+    setState(() => _loginErrorMsg = 'Connection error: $e');
+  }
+}
 
   @override
   Widget build(BuildContext context) {

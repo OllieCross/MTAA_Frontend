@@ -98,6 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (response.statusCode == 200) {
+      await notificationsPlugin.cancel(rid);
       if (!mounted) return;
       setState(() {
         reservations.removeWhere((r) => r['rid'] == rid);

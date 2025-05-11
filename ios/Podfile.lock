@@ -1,17 +1,12 @@
 PODS:
+  - background_fetch (1.3.8):
+    - Flutter
   - connectivity_plus (0.0.1):
     - Flutter
   - Firebase/CoreOnly (11.10.0):
     - FirebaseCore (~> 11.10.0)
-  - Firebase/Messaging (11.10.0):
-    - Firebase/CoreOnly
-    - FirebaseMessaging (~> 11.10.0)
   - firebase_core (3.13.0):
     - Firebase/CoreOnly (= 11.10.0)
-    - Flutter
-  - firebase_messaging (15.2.5):
-    - Firebase/Messaging (= 11.10.0)
-    - firebase_core
     - Flutter
   - FirebaseCore (11.10.0):
     - FirebaseCoreInternal (~> 11.10.0)
@@ -19,20 +14,6 @@ PODS:
     - GoogleUtilities/Logger (~> 8.0)
   - FirebaseCoreInternal (11.10.0):
     - "GoogleUtilities/NSData+zlib (~> 8.0)"
-  - FirebaseInstallations (11.10.0):
-    - FirebaseCore (~> 11.10.0)
-    - GoogleUtilities/Environment (~> 8.0)
-    - GoogleUtilities/UserDefaults (~> 8.0)
-    - PromisesObjC (~> 2.4)
-  - FirebaseMessaging (11.10.0):
-    - FirebaseCore (~> 11.10.0)
-    - FirebaseInstallations (~> 11.0)
-    - GoogleDataTransport (~> 10.0)
-    - GoogleUtilities/AppDelegateSwizzler (~> 8.0)
-    - GoogleUtilities/Environment (~> 8.0)
-    - GoogleUtilities/Reachability (~> 8.0)
-    - GoogleUtilities/UserDefaults (~> 8.0)
-    - nanopb (~> 3.30910.0)
   - Flutter (1.0.0)
   - flutter_image_compress_common (1.0.0):
     - Flutter
@@ -44,33 +25,14 @@ PODS:
   - geolocator_apple (1.2.0):
     - Flutter
     - FlutterMacOS
-  - GoogleDataTransport (10.1.0):
-    - nanopb (~> 3.30910.0)
-    - PromisesObjC (~> 2.4)
-  - GoogleUtilities/AppDelegateSwizzler (8.1.0):
-    - GoogleUtilities/Environment
-    - GoogleUtilities/Logger
-    - GoogleUtilities/Network
-    - GoogleUtilities/Privacy
   - GoogleUtilities/Environment (8.1.0):
     - GoogleUtilities/Privacy
   - GoogleUtilities/Logger (8.1.0):
     - GoogleUtilities/Environment
     - GoogleUtilities/Privacy
-  - GoogleUtilities/Network (8.1.0):
-    - GoogleUtilities/Logger
-    - "GoogleUtilities/NSData+zlib"
-    - GoogleUtilities/Privacy
-    - GoogleUtilities/Reachability
   - "GoogleUtilities/NSData+zlib (8.1.0)":
     - GoogleUtilities/Privacy
   - GoogleUtilities/Privacy (8.1.0)
-  - GoogleUtilities/Reachability (8.1.0):
-    - GoogleUtilities/Logger
-    - GoogleUtilities/Privacy
-  - GoogleUtilities/UserDefaults (8.1.0):
-    - GoogleUtilities/Logger
-    - GoogleUtilities/Privacy
   - image_picker_ios (0.0.1):
     - Flutter
   - libwebp (1.5.0):
@@ -88,15 +50,9 @@ PODS:
   - Mantle (2.2.0):
     - Mantle/extobjc (= 2.2.0)
   - Mantle/extobjc (2.2.0)
-  - nanopb (3.30910.0):
-    - nanopb/decode (= 3.30910.0)
-    - nanopb/encode (= 3.30910.0)
-  - nanopb/decode (3.30910.0)
-  - nanopb/encode (3.30910.0)
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - PromisesObjC (2.4.0)
   - SDWebImage (5.21.0):
     - SDWebImage/Core (= 5.21.0)
   - SDWebImage/Core (5.21.0)
@@ -108,9 +64,9 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - background_fetch (from `.symlinks/plugins/background_fetch/ios`)
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
-  - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - Flutter (from `Flutter`)
   - flutter_image_compress_common (from `.symlinks/plugins/flutter_image_compress_common/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
@@ -124,24 +80,19 @@ SPEC REPOS:
     - Firebase
     - FirebaseCore
     - FirebaseCoreInternal
-    - FirebaseInstallations
-    - FirebaseMessaging
-    - GoogleDataTransport
     - GoogleUtilities
     - libwebp
     - Mantle
-    - nanopb
-    - PromisesObjC
     - SDWebImage
     - SDWebImageWebPCoder
 
 EXTERNAL SOURCES:
+  background_fetch:
+    :path: ".symlinks/plugins/background_fetch/ios"
   connectivity_plus:
     :path: ".symlinks/plugins/connectivity_plus/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
-  firebase_messaging:
-    :path: ".symlinks/plugins/firebase_messaging/ios"
   Flutter:
     :path: Flutter
   flutter_image_compress_common:
@@ -158,30 +109,25 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
 
 SPEC CHECKSUMS:
+  background_fetch: 851122c99dc3f25a011a6aebec5379ccdf4ab5eb
   connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
   Firebase: 1fe1c0a7d9aaea32efe01fbea5f0ebd8d70e53a2
   firebase_core: 2d4534e7b489907dcede540c835b48981d890943
-  firebase_messaging: 75bc93a4df25faccad67f6662ae872ac9ae69b64
   FirebaseCore: 8344daef5e2661eb004b177488d6f9f0f24251b7
   FirebaseCoreInternal: ef4505d2afb1d0ebbc33162cb3795382904b5679
-  FirebaseInstallations: 9980995bdd06ec8081dfb6ab364162bdd64245c3
-  FirebaseMessaging: 2b9f56aa4ed286e1f0ce2ee1d413aabb8f9f5cb9
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_image_compress_common: 1697a328fd72bfb335507c6bca1a65fa5ad87df1
   flutter_local_notifications: a5a732f069baa862e728d839dd2ebb904737effb
   geolocator_apple: ab36aa0e8b7d7a2d7639b3b4e48308394e8cef5e
-  GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   image_picker_ios: 7fe1ff8e34c1790d6fff70a32484959f563a928a
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   Mantle: c5aa8794a29a022dfbbfc9799af95f477a69b62d
-  nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
-  PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   SDWebImage: f84b0feeb08d2d11e6a9b843cb06d75ebf5b8868
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
 
-PODFILE CHECKSUM: 6d437a0ebb22c1377f30cc2dd77b9f2a9aefe0eb
+PODFILE CHECKSUM: ef9250b0986df1784ec3cdffad42c0d25517df0c
 
 COCOAPODS: 1.16.2
