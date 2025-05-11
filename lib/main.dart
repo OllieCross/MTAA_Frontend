@@ -113,6 +113,7 @@ Future<void> main() async {
   await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
   await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
   await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+  
   tz.initializeTimeZones();
   await Hive.initFlutter();
   

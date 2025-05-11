@@ -9,6 +9,8 @@ import 'server_config.dart';
 import 'app_settings.dart';
 import 'dart:async';
 import 'offline_sync_repository.dart';
+import 'package:flutter/cupertino.dart';
+import 'accommondation_detail.dart';
 
 class SyncToast extends StatefulWidget {
   const SyncToast({super.key, required this.child, this.onSynced});
@@ -243,6 +245,17 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                                     Column(
                                       children: [
                                         IconButton(
+                                          icon: Icon(CupertinoIcons.eye, color: textColor),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => AccommodationDetailScreen(aid: item['aid']),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
                                           icon: Icon(
                                             Icons.edit,
                                             color: textColor,
@@ -265,10 +278,29 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                                             Icons.delete,
                                             color: textColor,
                                           ),
-                                          onPressed:
-                                              () => _deleteAccommodation(
-                                                item['aid'],
+                                          onPressed: () {
+                                            showCupertinoDialog(
+                                              context: context,
+                                              builder: (_) => CupertinoAlertDialog(
+                                                title: Text('Delete Accommodation'),
+                                                content: Text('Are you sure you want to delete this accommodation?'),
+                                                actions: [
+                                                  CupertinoDialogAction(
+                                                    child: Text('Cancel'),
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                  ),
+                                                  CupertinoDialogAction(
+                                                    isDestructiveAction: true,
+                                                    child: Text('Delete'),
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop();
+                                                      _deleteAccommodation(item['aid']);
+                                                    },
+                                                  ),
+                                                ],
                                               ),
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),
@@ -338,6 +370,17 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                                     Column(
                                       children: [
                                         IconButton(
+                                          icon: Icon(CupertinoIcons.eye, color: textColor),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => AccommodationDetailScreen(aid: item['aid']),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
                                           icon: Icon(
                                             Icons.edit,
                                             color: textColor,
@@ -361,9 +404,29 @@ class _MyAccommodationsScreenState extends State<MyAccommodationsScreen> {
                                             color: textColor,
                                           ),
                                           onPressed:
-                                              () => _deleteAccommodation(
-                                                item['aid'],
+                                              () {
+                                            showCupertinoDialog(
+                                              context: context,
+                                              builder: (_) => CupertinoAlertDialog(
+                                                title: Text('Delete Accommodation'),
+                                                content: Text('Are you sure you want to delete this accommodation?'),
+                                                actions: [
+                                                  CupertinoDialogAction(
+                                                    child: Text('Cancel'),
+                                                    onPressed: () => Navigator.of(context).pop(),
+                                                  ),
+                                                  CupertinoDialogAction(
+                                                    isDestructiveAction: true,
+                                                    child: Text('Delete'),
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop();
+                                                      _deleteAccommodation(item['aid']);
+                                                    },
+                                                  ),
+                                                ],
                                               ),
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),

@@ -21,6 +21,7 @@ class ReserveFormularScreen extends StatefulWidget {
 class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
   DateTime? fromDate;
   DateTime? toDate;
+  final TextEditingController _phoneController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -194,12 +195,33 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
             ),
           ],
         ),
-        _buildTextField(
-          label: 'Phone number',
-          keyboardType: TextInputType.phone,
-          fillColor: fillColor,
-          textColor: textColor,
-          bigText: bigText,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: TextField(
+            controller: _phoneController,
+            keyboardType: TextInputType.text,
+            style: TextStyle(
+              color: textColor,
+              fontSize: bigText ? 18 : 14,
+              fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Helvetica',
+            ),
+            decoration: InputDecoration(
+              labelText: 'Phone number',
+              labelStyle: TextStyle(
+                color: textColor.withOpacity(0.8),
+                fontSize: bigText ? 16 : 14,
+                fontWeight: bigText ? FontWeight.bold : FontWeight.normal,
+                fontFamily: 'Helvetica',
+              ),
+              filled: true,
+              fillColor: fillColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
         ),
         _buildTextField(
           label: 'Email address',
@@ -463,6 +485,17 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
       );
       return;
     }
+
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty || !RegExp(r'^[0-9+]+$').hasMatch(phone)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('Please enter a valid phone number (digits and + only).')),
+      );
+      return;
+    }
+
     final token = globalToken;
     final url = Uri.parse('http://$serverIp:$serverPort/make-reservation');
     final aid = widget.accommodation['aid'];

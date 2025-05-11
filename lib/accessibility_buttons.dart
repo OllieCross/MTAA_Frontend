@@ -43,7 +43,7 @@ class AccessibilityButtons extends StatelessWidget {
             onPressed: () {
               FirebaseCrashlytics.instance.crash();
             },
-            child: Text('Crash now'),)
+            child: Text('Crash app'),)
         ],
       ),
     );

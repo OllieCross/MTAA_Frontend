@@ -29,6 +29,19 @@ class ConfirmationScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        foregroundColor: textColor,
+        elevation: 0,
+        title: Text("Reservation Added",
+          style: TextStyle(
+            fontSize: 22,
+            color: textColor,
+            fontFamily: 'Helvetica',
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
       body: Center(
         child: Padding(

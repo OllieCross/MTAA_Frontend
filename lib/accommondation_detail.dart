@@ -58,12 +58,15 @@ class AccommodationDetailScreen extends StatefulWidget {
   @override
   State<AccommodationDetailScreen> createState() =>
       _AccommodationDetailScreenState();
+
+  
 }
 
 class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
   Json? data;
   List<int> imageIndices = [];
   String? jwtToken = globalToken;
+  bool _isLiked = false;
 
   @override
   void initState() {
@@ -86,6 +89,7 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
       setState(() {
         data = Map<String, dynamic>.from(decoded['accommodation']);
         imageIndices = [1, 2, 3];
+        _isLiked = decoded['accommodation']['is_liked'] ?? false;
       });
     }
   }
@@ -99,6 +103,24 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
           (context, error, stackTrace) =>
               const Center(child: Icon(Icons.broken_image)),
     );
+  }
+
+  Future<void> toggleLike() async {
+    final resp = await http.post(
+      Uri.parse('http://$serverIp:$serverPort/like_dislike'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (jwtToken != null) 'Authorization': 'Bearer $jwtToken',
+      },
+      body: jsonEncode({'aid': widget.aid}),
+    );
+    if (resp.statusCode == 200) {
+      final msg = jsonDecode(resp.body)['message'];
+      if (!mounted) return;
+      setState(() {
+        _isLiked = msg == 'Liked accommodation';
+      });
+    }
   }
 
   @override
@@ -375,6 +397,21 @@ class _AccommodationDetailScreenState extends State<AccommodationDetailScreen> {
                   : (isDark ? AppColors.colorTextDark : AppColors.colorText),
           fontFamily: 'Helvetica',
         ),
+        actions: [
+      IconButton(
+        icon: Icon(
+          _isLiked ? Icons.favorite : Icons.favorite_border,
+          color: _isLiked
+            ? (isDark
+                ? AppColors.color1DarkHigh
+                : AppColors.color1High)
+            : (MediaQuery.of(context).platformBrightness == Brightness.dark
+                ? Colors.white
+                : Colors.black),
+        ),
+        onPressed: toggleLike,
+      ),
+    ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

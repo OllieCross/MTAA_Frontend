@@ -14,6 +14,7 @@ import 'dart:typed_data';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'offline_sync_repository.dart';
 import 'accommodation_draft.dart';
+import 'confirmation_accommodation.dart';
 
 class AddAccommodationScreen extends StatefulWidget {
   final Map<String, dynamic>? accommodation;
@@ -27,7 +28,10 @@ class AddAccommodationScreen extends StatefulWidget {
 class _AddAccommodationScreenState extends State<AddAccommodationScreen> {
   final nameController = TextEditingController();
   final addressController = TextEditingController();
+  final emailController = TextEditingController();
   final guestsController = TextEditingController();
+  final bedsController = TextEditingController();
+  final typecontroller = TextEditingController();
   final priceController = TextEditingController();
   final ibanController = TextEditingController();
   final descriptionController = TextEditingController();
@@ -204,10 +208,12 @@ Future<bool> _tryUploadOnline(String token, List<Uint8List> images) async {
   final resp = await req.send();
   if (resp.statusCode == 201) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        _buildSnackBar("Accommodation added successfully."),
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SuccessfulAccommodationScreen(),
+        ),
       );
-      Navigator.pop(context);
     }
     return true;
   } else {
@@ -234,6 +240,9 @@ Future<bool> _tryUploadOnline(String token, List<Uint8List> images) async {
   void dispose() {
     nameController.dispose();
     addressController.dispose();
+    emailController.dispose();
+    bedsController.dispose();
+    typecontroller.dispose();
     guestsController.dispose();
     priceController.dispose();
     ibanController.dispose();
@@ -294,6 +303,17 @@ Future<bool> _tryUploadOnline(String token, List<Uint8List> images) async {
                 children: [
                   _buildField(label: "Name", controller: nameController),
                   _buildField(label: "Address", controller: addressController),
+                  _buildField(label: "Email",controller: emailController,keyboardType: TextInputType.emailAddress),
+                  _buildField(
+                    label: "Type",
+                    controller: typecontroller,
+                    keyboardType: TextInputType.text,
+                  ),
+                  _buildField(
+                    label: "Nr. of Beds",
+                    controller: bedsController,
+                    keyboardType: TextInputType.number,
+                  ),
                   _buildField(
                     label: "Nr. of Guests",
                     controller: guestsController,
