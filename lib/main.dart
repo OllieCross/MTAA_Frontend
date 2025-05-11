@@ -1,31 +1,40 @@
-import 'dart:convert';
+//import packages
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:background_fetch/background_fetch.dart';
+import 'package:intl/intl.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
+//imports as
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:http/http.dart' as http;
+//import dart
+import 'dart:async';
+import 'dart:convert';
+//import lib
 import 'main_screen_accommodations.dart';
 import 'register.dart';
 import 'server_config.dart';
 import 'app_settings.dart';
 import 'accessibility_buttons.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:hive_flutter/hive_flutter.dart';
 import 'offline_sync_repository.dart';
 import 'accommodation_draft.dart';
-import 'dart:async';
-import 'package:background_fetch/background_fetch.dart';
-import 'package:intl/intl.dart';
-
+import 'firebase_options.dart';
 
 String? globalToken;
 int? globalUserId;
 final FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotificationsPlugin();
 final GlobalKey<ScaffoldMessengerState> globalScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final Trace trace = FirebasePerformance.instance.newTrace('test_trace');
 
 Future<void> notifyNextStay() async {
+  await trace.start();
   final uri = Uri.parse('http://$serverIp:$serverPort/upcoming_reservations');
   final res = await http.get(uri, headers: {
     'Content-Type': 'application/json',
@@ -56,6 +65,7 @@ Future<void> notifyNextStay() async {
       ),
     ),
   );
+  await trace.stop();
 }
 
 Future<void> _backgroundFetchTask(String taskId) async {
@@ -97,8 +107,16 @@ Future<void> _backgroundFetchTask(String taskId) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+  await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
   tz.initializeTimeZones();
   await Hive.initFlutter();
+  
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
   Hive.registerAdapter(AccommodationDraftAdapter());
   OfflineSyncRepository.instance;
 
@@ -147,9 +165,12 @@ Future<void> main() async {
   );
 
   BackgroundFetch.status.then((status) {
-  print('[BackgroundFetch] status: $status');
-});
+    print('[BackgroundFetch] status: $status');
+  });
 
+  FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
+
+  runZonedGuarded<Future<void>>(() async {
   runApp(
     SyncToast(
       child: MultiProvider(
@@ -165,6 +186,7 @@ Future<void> main() async {
       ),
     ),
   );
+  }, FirebaseCrashlytics.instance.recordError);
 }
 
 class RoomFinderApp extends StatelessWidget {

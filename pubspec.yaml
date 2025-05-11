@@ -21,6 +21,8 @@ dependencies:
   http_parser: ^4.0.0 # for parsing HTTP responses
   socket_io_client: ^3.1.2 # for real-time communication
   firebase_core: ^3.13.0 # for Firebase initialization
+  firebase_crashlytics: ^4.3.5 # for crash reporting
+  firebase_performance: ^0.10.1+5 # for performance monitoring
   flutter_local_notifications: ^19.2.0 # nice foreground banners
   cached_network_image: ^3.2.3 # for caching network images
   connectivity_plus: ^6.0.1 # for checking network connectivity

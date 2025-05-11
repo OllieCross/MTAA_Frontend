@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_settings.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 class AccessibilityButtons extends StatelessWidget {
   const AccessibilityButtons({super.key});
@@ -37,6 +39,11 @@ class AccessibilityButtons extends StatelessWidget {
               ),
             ],
           ),
+          ElevatedButton(
+            onPressed: () {
+              FirebaseCrashlytics.instance.crash();
+            },
+            child: Text('Crash now'),)
         ],
       ),
     );

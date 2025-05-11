@@ -50,3 +50,4 @@ app.*.map.json
 /ios/build/ios/XCBuildData/PIFcache/project
 /ios/build/ios/XCBuildData/PIFcache/target
 /ios/build/ios/XCBuildData/PIFcache/workspace
+/ios/Runner/GoogleService-Info.plist
