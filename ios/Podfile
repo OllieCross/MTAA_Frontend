@@ -1,6 +1,6 @@
 platform :ios, '13.0'
-use_frameworks!
-use_modular_headers!
+# Use static frameworks to ensure symbols are linked for both device and simulator
+use_frameworks! :linkage => :static
 
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
@@ -27,6 +27,11 @@ flutter_ios_podfile_setup
 target 'Runner' do
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
+  # Core image and JSON model dependencies
+  pod 'SDWebImage', '~> 5.15'
+  pod 'SDWebImageWebPCoder'
+  pod 'Mantle', '~> 2.2'
+
   target 'RunnerTests' do
     inherit! :search_paths
   end
@@ -36,7 +41,10 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] ||= 'arm64'
+      # Always build for all simulator archs and include symbols
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+      # Clear any excluded simulator architectures
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = ''
     end
   end
 end

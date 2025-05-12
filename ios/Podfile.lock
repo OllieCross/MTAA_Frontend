@@ -152,7 +152,10 @@ DEPENDENCIES:
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
+  - Mantle (~> 2.2)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+  - SDWebImage (~> 5.15)
+  - SDWebImageWebPCoder
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
 
 SPEC REPOS:
@@ -240,6 +243,6 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
 
-PODFILE CHECKSUM: ef9250b0986df1784ec3cdffad42c0d25517df0c
+PODFILE CHECKSUM: ed937f5125c50de8247a90af5e0a7492b6adb0e6
 
 COCOAPODS: 1.16.2
