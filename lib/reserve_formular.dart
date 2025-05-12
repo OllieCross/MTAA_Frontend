@@ -486,16 +486,6 @@ class _ReserveFormularScreenState extends State<ReserveFormularScreen> {
       return;
     }
 
-    final phone = _phoneController.text.trim();
-    if (phone.isEmpty || !RegExp(r'^[0-9+]+$').hasMatch(phone)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('Please enter a valid phone number (digits and + only).')),
-      );
-      return;
-    }
-
     final token = globalToken;
     final url = Uri.parse('http://$serverIp:$serverPort/make-reservation');
     final aid = widget.accommodation['aid'];
