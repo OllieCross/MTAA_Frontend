@@ -71,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           body: jsonEncode({
             'email': email,
             'password': password,
-            'role': 'guest',
+            'role': 'customer',
           }),
         );
 
